@@ -106,11 +106,8 @@ export default function Search() {
   };
 
   const handleSearch = () => {
-    // Filter logic would be implemented here
-    toast({
-      title: "Searching",
-      description: "Search functionality coming soon!",
-    });
+    // Search is implemented through filtering - no additional action needed
+    // The filteredCompanies and sortedCompanies already handle the search
   };
 
   // Filter companies based on search criteria

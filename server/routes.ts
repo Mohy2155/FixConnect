@@ -327,6 +327,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Company dashboard routes
+  app.get('/api/companies/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const company = await storage.getCompanyByUserId(userId);
+      if (!company) {
+        return res.status(404).json({ message: 'Company profile not found' });
+      }
+      res.json(company);
+    } catch (error) {
+      console.error('Company profile fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch company profile' });
+    }
+  });
+
+  app.get('/api/service-requests/available', isAuthenticated, async (req: any, res) => {
+    try {
+      // Return all service requests that are in 'pending' status for companies to quote
+      const requests = await storage.getServiceRequestsByStatus('pending');
+      res.json(requests);
+    } catch (error) {
+      console.error('Available requests fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch available requests' });
+    }
+  });
+
+  app.get('/api/quotes/company', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const company = await storage.getCompanyByUserId(userId);
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+      
+      const quotes = await storage.getQuotesByCompany(company.id);
+      res.json(quotes);
+    } catch (error) {
+      console.error('Company quotes fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch company quotes' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

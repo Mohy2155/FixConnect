@@ -14,6 +14,7 @@ import Jobs from "@/pages/jobs";
 import Messages from "@/pages/messages";
 import Search from "@/pages/search";
 import Profile from "@/pages/profile";
+import CompanyDashboard from "@/pages/company-dashboard";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -31,6 +32,7 @@ function Router() {
           <Route path="/jobs/:id" component={JobDetails} />
           <Route path="/messages" component={Messages} />
           <Route path="/search" component={Search} />
+          <Route path="/company-dashboard" component={CompanyDashboard} />
           <Route path="/profile" component={Profile} />
         </>
       )}

@@ -50,6 +50,7 @@ export interface IStorage {
   // Service requests
   getServiceRequest(id: string): Promise<ServiceRequest | undefined>;
   getServiceRequestsByCustomer(customerId: string): Promise<ServiceRequest[]>;
+  getServiceRequestsByStatus(status: string): Promise<ServiceRequest[]>;
   createServiceRequest(request: InsertServiceRequest): Promise<ServiceRequest>;
   updateServiceRequest(id: string, updates: Partial<InsertServiceRequest>): Promise<ServiceRequest>;
   
@@ -157,6 +158,14 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(serviceRequests)
       .where(eq(serviceRequests.customerId, customerId))
+      .orderBy(desc(serviceRequests.createdAt));
+  }
+
+  async getServiceRequestsByStatus(status: string): Promise<ServiceRequest[]> {
+    return await db
+      .select()
+      .from(serviceRequests)
+      .where(eq(serviceRequests.status, status as any))
       .orderBy(desc(serviceRequests.createdAt));
   }
 

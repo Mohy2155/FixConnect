@@ -246,10 +246,10 @@ export default function JobDetails() {
                           </h4>
                           {quote.company && (
                             <Stars 
-                              rating={Number(quote.company.rating)} 
+                              rating={Number(quote.company.rating) || 0} 
                               size="sm" 
                               showNumber 
-                              reviewCount={quote.company.reviewCount}
+                              reviewCount={quote.company.reviewCount || 0}
                             />
                           )}
                         </div>
