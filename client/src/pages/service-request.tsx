@@ -209,7 +209,7 @@ export default function ServiceRequest() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Specific Item/Part</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ""}>
+                        <Select onValueChange={field.onChange} value={field.value || undefined}>
                           <FormControl>
                             <SelectTrigger data-testid="select-part">
                               <SelectValue placeholder="Select item..." />
@@ -295,7 +295,7 @@ export default function ServiceRequest() {
                       <FormControl>
                         <RadioGroup
                           onValueChange={field.onChange}
-                          defaultValue={field.value}
+                          defaultValue={field.value || undefined}
                           className="flex space-x-6"
                           data-testid="radio-property-type"
                         >
@@ -320,7 +320,7 @@ export default function ServiceRequest() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Priority</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                         <FormControl>
                           <SelectTrigger data-testid="select-priority">
                             <SelectValue />

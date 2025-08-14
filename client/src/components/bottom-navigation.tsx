@@ -19,7 +19,7 @@ export function BottomNavigation({ unreadCount = 0 }: BottomNavigationProps) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-surface border-t border-gray-100 shadow-lg z-50">
+    <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-sm bg-surface border-t border-gray-100 shadow-lg z-navigation">
       <div className="grid grid-cols-5 py-2">
         {navItems.map(({ path, icon: Icon, label, badge }) => {
           const isActive = location === path;

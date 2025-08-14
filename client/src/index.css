@@ -130,4 +130,31 @@
   .bg-surface {
     background-color: hsl(var(--surface));
   }
+  
+  /* Fix z-index layering for proper UI stacking */
+  .z-dropdown {
+    z-index: 99999 !important;
+  }
+  
+  .z-tooltip {
+    z-index: 100000 !important;
+  }
+  
+  .z-modal {
+    z-index: 100001 !important;
+  }
+  
+  .z-navigation {
+    z-index: 1000 !important;
+  }
+  
+  /* Ensure select content appears above all other elements */
+  [data-radix-select-content] {
+    z-index: 99999 !important;
+  }
+  
+  /* Fix portal content positioning */
+  [data-radix-portal] {
+    z-index: 99999 !important;
+  }
 }
