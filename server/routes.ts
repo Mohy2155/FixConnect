@@ -103,42 +103,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Update user role
-  app.post('/api/auth/user/role', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/auth/user/role', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
       const { role } = req.body;
+      const userId = req.user.claims.sub;
       
       if (!['homeowner', 'company'].includes(role)) {
         return res.status(400).json({ message: 'Invalid role' });
       }
       
-      await storage.upsertUser({ id: userId, role, updatedAt: new Date() });
+      // Update user role in database via upsert
+      await storage.upsertUser({
+        id: userId,
+        role,
+        email: req.user.claims.email,
+        firstName: req.user.claims.first_name,
+        lastName: req.user.claims.last_name,
+        profileImageUrl: req.user.claims.profile_image_url,
+      });
+      
       res.json({ message: 'Role updated successfully' });
     } catch (error) {
-      console.error('Role update error:', error);
+      console.error('Error updating user role:', error);
       res.status(500).json({ message: 'Failed to update role' });
     }
   });
 
-  // Service categories
+  // Service Categories
   app.get('/api/categories', async (req, res) => {
     try {
       const categories = await storage.getServiceCategories();
       res.json(categories);
     } catch (error) {
-      console.error('Categories fetch error:', error);
+      console.error('Error fetching categories:', error);
       res.status(500).json({ message: 'Failed to fetch categories' });
     }
   });
 
-  // Service parts by category
   app.get('/api/categories/:categoryId/parts', async (req, res) => {
     try {
       const { categoryId } = req.params;
       const parts = await storage.getServicePartsByCategory(categoryId);
       res.json(parts);
     } catch (error) {
-      console.error('Parts fetch error:', error);
+      console.error('Error fetching parts:', error);
       res.status(500).json({ message: 'Failed to fetch parts' });
     }
   });
@@ -147,30 +155,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/companies', async (req, res) => {
     try {
       const { categoryId } = req.query;
-      const companies = categoryId 
-        ? await storage.getCompaniesByServiceCategory(categoryId as string)
-        : [];
+      let companies;
+      if (categoryId) {
+        companies = await storage.getCompaniesByServiceCategory(categoryId as string);
+      } else {
+        // Return all verified companies
+        companies = await storage.getCompaniesByServiceCategory('');
+      }
       res.json(companies);
     } catch (error) {
-      console.error('Companies fetch error:', error);
+      console.error('Error fetching companies:', error);
       res.status(500).json({ message: 'Failed to fetch companies' });
     }
   });
 
-  // Create company profile
+  app.get('/api/companies/:userId', isAuthenticated, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const company = await storage.getCompanyByUserId(userId);
+      res.json(company);
+    } catch (error) {
+      console.error('Error fetching company:', error);
+      res.status(500).json({ message: 'Failed to fetch company' });
+    }
+  });
+
   app.post('/api/companies', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
-      const companyData = insertCompanySchema.parse({ ...req.body, userId });
+      const companyData = {
+        ...req.body,
+        userId,
+        isVerified: false,
+        rating: '0',
+        reviewCount: 0,
+      };
       
       const company = await storage.createCompany(companyData);
       res.json(company);
     } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: 'Invalid company data', errors: error.errors });
-      }
-      console.error('Company creation error:', error);
+      console.error('Error creating company:', error);
       res.status(500).json({ message: 'Failed to create company' });
+    }
+  });
+
+  app.put('/api/companies/:companyId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { companyId } = req.params;
+      const userId = req.user.claims.sub;
+      
+      // Verify company belongs to user
+      const existingCompany = await storage.getCompany(companyId);
+      if (!existingCompany || existingCompany.userId !== userId) {
+        return res.status(403).json({ message: 'Not authorized' });
+      }
+      
+      const company = await storage.updateCompany(companyId, req.body);
+      res.json(company);
+    } catch (error) {
+      console.error('Error updating company:', error);
+      res.status(500).json({ message: 'Failed to update company' });
+    }
+  });
+
+  // Service Requests
+  app.get('/api/service-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const serviceRequests = await storage.getServiceRequestsByCustomer(userId);
+      res.json(serviceRequests);
+    } catch (error) {
+      console.error('Error fetching service requests:', error);
+      res.status(500).json({ message: 'Failed to fetch service requests' });
+    }
+  });
+
+  app.post('/api/service-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const requestData = {
+        ...req.body,
+        customerId: userId,
+        status: 'pending',
+      };
+      
+      const serviceRequest = await storage.createServiceRequest(requestData);
+      res.json(serviceRequest);
+    } catch (error) {
+      console.error('Error creating service request:', error);
+      res.status(500).json({ message: 'Failed to create service request' });
+    }
+  });
+
+  // Quotes
+  app.get('/api/service-requests/:requestId/quotes', isAuthenticated, async (req, res) => {
+    try {
+      const { requestId } = req.params;
+      const quotes = await storage.getQuotesByServiceRequest(requestId);
+      res.json(quotes);
+    } catch (error) {
+      console.error('Error fetching quotes:', error);
+      res.status(500).json({ message: 'Failed to fetch quotes' });
+    }
+  });
+
+  // Messages  
+  app.get('/api/messages/unread-count', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const count = await storage.getUnreadMessageCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+      res.status(500).json({ message: 'Failed to fetch unread count' });
+    }
+  });
+
+  app.get('/api/service-requests/:requestId/messages', isAuthenticated, async (req, res) => {
+    try {
+      const { requestId } = req.params;
+      const messages = await storage.getMessagesByServiceRequest(requestId);
+      res.json(messages);
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      res.status(500).json({ message: 'Failed to fetch messages' });
     }
   });
 
@@ -216,123 +324,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Service request fetch error:', error);
       res.status(500).json({ message: 'Failed to fetch service request' });
-    }
-  });
-
-  // Quotes
-  app.get('/api/service-requests/:id/quotes', async (req, res) => {
-    try {
-      const { id } = req.params;
-      const quotes = await storage.getQuotesByServiceRequest(id);
-      res.json(quotes);
-    } catch (error) {
-      console.error('Quotes fetch error:', error);
-      res.status(500).json({ message: 'Failed to fetch quotes' });
-    }
-  });
-
-  app.post('/api/quotes', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      
-      // Verify user is a company
-      const company = await storage.getCompanyByUserId(userId);
-      if (!company) {
-        return res.status(403).json({ message: 'Only companies can create quotes' });
-      }
-      
-      const quoteData = insertQuoteSchema.parse({ 
-        ...req.body, 
-        companyId: company.id 
-      });
-      
-      const quote = await storage.createQuote(quoteData);
-      res.json(quote);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: 'Invalid quote data', errors: error.errors });
-      }
-      console.error('Quote creation error:', error);
-      res.status(500).json({ message: 'Failed to create quote' });
-    }
-  });
-
-  app.post('/api/quotes/:id/accept', isAuthenticated, async (req: any, res) => {
-    try {
-      const { id } = req.params;
-      const quote = await storage.updateQuote(id, { isAccepted: true });
-      
-      // Update service request status
-      await storage.updateServiceRequest(quote.serviceRequestId, { 
-        status: 'approved' 
-      });
-      
-      res.json(quote);
-    } catch (error) {
-      console.error('Quote acceptance error:', error);
-      res.status(500).json({ message: 'Failed to accept quote' });
-    }
-  });
-
-  // Reviews
-  app.post('/api/reviews', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const reviewData = insertReviewSchema.parse({ 
-        ...req.body, 
-        customerId: userId 
-      });
-      
-      const review = await storage.createReview(reviewData);
-      res.json(review);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: 'Invalid review data', errors: error.errors });
-      }
-      console.error('Review creation error:', error);
-      res.status(500).json({ message: 'Failed to create review' });
-    }
-  });
-
-  // Messages
-  app.get('/api/service-requests/:id/messages', isAuthenticated, async (req, res) => {
-    try {
-      const { id } = req.params;
-      const messages = await storage.getMessagesByServiceRequest(id);
-      res.json(messages);
-    } catch (error) {
-      console.error('Messages fetch error:', error);
-      res.status(500).json({ message: 'Failed to fetch messages' });
-    }
-  });
-
-  app.post('/api/messages', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const messageData = insertMessageSchema.parse({ 
-        ...req.body, 
-        senderId: userId 
-      });
-      
-      const message = await storage.createMessage(messageData);
-      res.json(message);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: 'Invalid message data', errors: error.errors });
-      }
-      console.error('Message creation error:', error);
-      res.status(500).json({ message: 'Failed to create message' });
-    }
-  });
-
-  app.get('/api/messages/unread-count', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const count = await storage.getUnreadMessageCount(userId);
-      res.json({ count });
-    } catch (error) {
-      console.error('Unread count fetch error:', error);
-      res.status(500).json({ message: 'Failed to fetch unread count' });
     }
   });
 

@@ -7,7 +7,7 @@ interface ServiceCategory {
   name: string;
   icon: string;
   color: string;
-  description?: string;
+  description?: string | null;
 }
 
 interface ServiceCategoriesProps {

@@ -210,7 +210,7 @@ export default function Home() {
                 <Card>
                   <CardContent className="p-3">
                     <div className="text-2xl font-bold text-primary" data-testid="text-active-jobs">
-                      {serviceRequests.filter(r => ['pending', 'quoted', 'approved', 'in_progress'].includes(r.status)).length}
+                      {serviceRequests.filter(r => r.status && ['pending', 'quoted', 'approved', 'in_progress'].includes(r.status)).length}
                     </div>
                     <div className="text-xs text-gray-500">Active Jobs</div>
                   </CardContent>
@@ -243,7 +243,7 @@ export default function Home() {
                 </div>
               ) : (
                 <ServiceCategories
-                  categories={categories}
+                  categories={categories.map(cat => ({ ...cat, description: cat.description || undefined }))}
                   onCategorySelect={handleCategorySelect}
                   className="mb-4"
                 />

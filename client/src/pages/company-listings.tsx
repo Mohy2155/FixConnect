@@ -24,8 +24,7 @@ export default function CompanyListings() {
 
   // Fetch companies for the selected category
   const { data: companies = [], isLoading: companiesLoading } = useQuery<Company[]>({
-    queryKey: ['/api/companies'],
-    queryParams: { categoryId },
+    queryKey: ['/api/companies', categoryId],
   });
 
   // Request quote mutation
@@ -48,7 +47,7 @@ export default function CompanyListings() {
         isAccepted: false,
         createdAt: new Date(),
         updatedAt: new Date(),
-        company: companies.find(c => c.id === data.companyId),
+        company: companies.find((c: Company) => c.id === data.companyId),
       };
       
       setSelectedQuote(mockQuote);

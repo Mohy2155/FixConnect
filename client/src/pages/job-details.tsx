@@ -1,122 +1,144 @@
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 import { Stars } from "@/components/ui/stars";
 import { BottomNavigation } from "@/components/bottom-navigation";
-import { ArrowLeft, MapPin, Clock, Calendar, DollarSign, MessageCircle } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Phone, MessageSquare, Star, CheckCircle } from "lucide-react";
 import { useLocation, useRoute } from "wouter";
-import { ServiceRequest } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { ServiceRequest, Quote, Company } from "@shared/schema";
+import { isUnauthorizedError } from "@/lib/authUtils";
+import { format } from "date-fns";
 
 export default function JobDetails() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const [match, params] = useRoute('/jobs/:id');
-
-  const jobId = params?.id;
+  const [match, params] = useRoute('/jobs/:jobId');
+  
+  const jobId = params?.jobId;
 
   // Fetch job details
-  const { data: job, isLoading } = useQuery<ServiceRequest>({
+  const { data: job, isLoading: jobLoading } = useQuery<ServiceRequest>({
     queryKey: ['/api/service-requests', jobId],
     enabled: !!jobId,
   });
 
-  // Mock job data with additional details
-  const mockJobDetails = {
-    id: jobId,
-    title: 'Kitchen Sink Replacement',
-    description: 'The kitchen sink is leaking and needs to be replaced. The faucet is also making strange noises.',
-    status: 'in_progress',
-    companyName: 'Al Waha Plumbing Services',
-    companyRating: 4.8,
-    companyReviews: 127,
-    estimatedPrice: 'AED 450',
-    actualPrice: 'AED 450',
-    progress: 75,
-    propertyType: 'apartment',
-    address: 'Building 123, Dubai Marina, Dubai',
-    preferredDate: '2025-01-10',
-    priority: 'medium',
-    createdAt: '2025-01-08T10:00:00Z',
-    estimatedCompletion: '2-3 hours',
-    warranty: '1 year on parts, 6 months on labor',
-    timeline: [
-      {
-        status: 'Request Submitted',
-        date: '2025-01-08 10:00 AM',
-        completed: true,
-      },
-      {
-        status: 'Quote Approved',
-        date: '2025-01-08 02:30 PM', 
-        completed: true,
-      },
-      {
-        status: 'Technician Assigned',
-        date: '2025-01-09 09:00 AM',
-        completed: true,
-      },
-      {
-        status: 'Work in Progress',
-        date: '2025-01-10 10:00 AM',
-        completed: true,
-      },
-      {
-        status: 'Work Completed',
-        date: 'In Progress...',
-        completed: false,
-      },
-    ],
-  };
+  // Fetch quotes for this job
+  const { data: quotes = [], isLoading: quotesLoading } = useQuery<(Quote & { company: Company })[]>({
+    queryKey: ['/api/service-requests', jobId, 'quotes'],
+    enabled: !!jobId,
+  });
+
+  // Accept quote mutation
+  const acceptQuoteMutation = useMutation({
+    mutationFn: async (quoteId: string) => {
+      return await apiRequest('POST', `/api/quotes/${quoteId}/accept`, {});
+    },
+    onSuccess: () => {
+      toast({
+        title: "Quote Accepted",
+        description: "The service provider will contact you soon to schedule the work.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/service-requests'] });
+      navigate('/jobs');
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to accept quote",
+        variant: "destructive",
+      });
+    },
+  });
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/');
+    }
+  }, [user, navigate]);
 
   const handleBack = () => {
     navigate('/jobs');
   };
 
-  const handleMessage = () => {
-    navigate(`/messages?jobId=${jobId}`);
+  const handleContactCompany = (companyId: string) => {
+    navigate(`/messages?jobId=${jobId}&companyId=${companyId}`);
   };
 
-  const handleRateService = () => {
-    toast({
-      title: "Rating Service",
-      description: "Rating feature coming soon!",
-    });
+  const handleAcceptQuote = (quoteId: string) => {
+    acceptQuoteMutation.mutate(quoteId);
   };
 
-  if (isLoading) {
+  const getStatusColor = (status?: string | null) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'quoted': return 'bg-blue-100 text-blue-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'in_progress': return 'bg-purple-100 text-purple-800';
+      case 'completed': return 'bg-gray-100 text-gray-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (status?: string | null) => {
+    switch (status) {
+      case 'pending': return 'Pending';
+      case 'quoted': return 'Quoted';
+      case 'approved': return 'Approved';
+      case 'in_progress': return 'In Progress';
+      case 'completed': return 'Completed';
+      case 'cancelled': return 'Cancelled';
+      default: return 'Unknown';
+    }
+  };
+
+  if (!match) {
+    return null;
+  }
+
+  if (jobLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p>Loading job details...</p>
+      <div className="max-w-sm mx-auto bg-surface min-h-screen">
+        <div className="p-4">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded mb-4"></div>
+            <div className="h-32 bg-gray-200 rounded mb-4"></div>
+            <div className="h-24 bg-gray-200 rounded"></div>
+          </div>
         </div>
       </div>
     );
   }
 
-  const statusColors = {
-    pending: "bg-yellow-100 text-yellow-800",
-    quoted: "bg-blue-100 text-blue-800",
-    approved: "bg-green-100 text-green-800", 
-    in_progress: "bg-accent text-white",
-    completed: "bg-success text-white",
-    cancelled: "bg-gray-100 text-gray-800",
-  };
-
-  const statusLabels = {
-    pending: "Pending",
-    quoted: "Quoted",
-    approved: "Approved",
-    in_progress: "In Progress", 
-    completed: "Completed",
-    cancelled: "Cancelled",
-  };
+  if (!job) {
+    return (
+      <div className="max-w-sm mx-auto bg-surface min-h-screen">
+        <div className="p-4 text-center">
+          <h2 className="text-lg font-medium text-gray-800 mb-2">Job Not Found</h2>
+          <p className="text-gray-600 mb-4">The requested job could not be found.</p>
+          <Button onClick={handleBack}>Back to Jobs</Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-sm mx-auto bg-surface min-h-screen relative">
@@ -137,194 +159,183 @@ export default function JobDetails() {
       </header>
 
       {/* Main Content */}
-      <main className="p-4 pb-20 space-y-4">
-        {/* Job Overview */}
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle className="text-lg" data-testid="text-job-title">
-                  {mockJobDetails.title}
-                </CardTitle>
-                <p className="text-sm text-gray-500 mt-1">
-                  Job ID: {jobId}
-                </p>
-              </div>
-              <Badge 
-                className={statusColors[mockJobDetails.status as keyof typeof statusColors]}
-                data-testid="badge-job-status"
-              >
-                {statusLabels[mockJobDetails.status as keyof typeof statusLabels]}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <p className="text-sm text-gray-700" data-testid="text-job-description">
-              {mockJobDetails.description}
-            </p>
-            
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
-              <div className="flex items-center space-x-1">
-                <MapPin className="h-4 w-4" />
-                <span data-testid="text-job-address">{mockJobDetails.address}</span>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-4 text-sm text-gray-600">
-              <div className="flex items-center space-x-1">
-                <Calendar className="h-4 w-4" />
-                <span>Created: {new Date(mockJobDetails.createdAt).toLocaleDateString()}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Company Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Service Provider</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between items-start">
-              <div>
-                <h4 className="font-medium" data-testid="text-company-name">
-                  {mockJobDetails.companyName}
-                </h4>
-                <Stars 
-                  rating={mockJobDetails.companyRating} 
-                  size="sm" 
-                  showNumber 
-                  reviewCount={mockJobDetails.companyReviews}
-                  className="mt-1"
-                />
-              </div>
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={handleMessage}
-                data-testid="button-message-company"
-              >
-                <MessageCircle className="h-4 w-4 mr-1" />
-                Message
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Progress */}
-        {mockJobDetails.status === 'in_progress' && (
+      <main className="pb-20">
+        {/* Job Info */}
+        <div className="p-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Progress</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between text-sm">
-                  <span>Work Progress</span>
-                  <span className="font-medium" data-testid="text-progress-percentage">
-                    {mockJobDetails.progress}%
-                  </span>
-                </div>
-                <Progress 
-                  value={mockJobDetails.progress} 
-                  className="h-3"
-                  data-testid="progress-bar"
-                />
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>Estimated completion: {mockJobDetails.estimatedCompletion}</span>
-                </div>
+              <div className="flex justify-between items-start mb-2">
+                <CardTitle className="text-lg" data-testid="text-job-title">
+                  {job.title}
+                </CardTitle>
+                <Badge className={getStatusColor(job.status)} data-testid="badge-job-status">
+                  {getStatusText(job.status)}
+                </Badge>
               </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Timeline */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Timeline</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {mockJobDetails.timeline.map((item, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className={`w-3 h-3 rounded-full mt-1 ${
-                    item.completed ? 'bg-success' : 'bg-gray-300'
-                  }`}></div>
-                  <div className="flex-1">
-                    <p className={`text-sm font-medium ${
-                      item.completed ? 'text-gray-900' : 'text-gray-500'
-                    }`} data-testid={`text-timeline-status-${index}`}>
-                      {item.status}
-                    </p>
-                    <p className="text-xs text-gray-500" data-testid={`text-timeline-date-${index}`}>
-                      {item.date}
-                    </p>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-gray-600" data-testid="text-job-description">
+                {job.description}
+              </p>
+              
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <MapPin className="h-4 w-4" />
+                <span data-testid="text-job-address">{job.address}</span>
+              </div>
+              
+              {job.preferredDate && (
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <Clock className="h-4 w-4" />
+                  <span>Preferred Date: {format(new Date(job.preferredDate), "PPP")}</span>
+                </div>
+              )}
+              
+              {job.budget && (
+                <div className="text-sm text-gray-500">
+                  Budget: AED {Number(job.budget).toFixed(2)}
+                </div>
+              )}
+              
+              {job.images && job.images.length > 0 && (
+                <div className="space-y-2">
+                  <h4 className="font-medium text-gray-800">Images</h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {job.images.map((image, index) => (
+                      <img
+                        key={index}
+                        src={image}
+                        alt={`Job image ${index + 1}`}
+                        className="w-full h-24 object-cover rounded border"
+                      />
+                    ))}
                   </div>
                 </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quotes Section */}
+        {quotes.length > 0 && (
+          <div className="px-4 pb-4">
+            <h3 className="text-lg font-medium text-gray-800 mb-3">
+              Quotes Received ({quotes.length})
+            </h3>
+            
+            <div className="space-y-3">
+              {quotes.map((quote) => (
+                <Card key={quote.id} className="border-l-4 border-l-primary">
+                  <CardContent className="p-4">
+                    {/* Company Info */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        {quote.company?.logo ? (
+                          <img
+                            src={quote.company.logo}
+                            alt={`${quote.company.name} logo`}
+                            className="w-10 h-10 rounded object-cover"
+                          />
+                        ) : (
+                          <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center">
+                            <span className="text-gray-400 text-xs">Logo</span>
+                          </div>
+                        )}
+                        <div>
+                          <h4 className="font-medium text-gray-800">
+                            {quote.company?.name}
+                          </h4>
+                          {quote.company && (
+                            <Stars 
+                              rating={Number(quote.company.rating)} 
+                              size="sm" 
+                              showNumber 
+                              reviewCount={quote.company.reviewCount}
+                            />
+                          )}
+                        </div>
+                      </div>
+                      
+                      {quote.isAccepted && (
+                        <Badge variant="secondary" className="text-green-700">
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Accepted
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Quote Details */}
+                    <div className="space-y-2 mb-3">
+                      <div className="flex justify-between text-sm">
+                        <span className="text-gray-600">Total Cost</span>
+                        <span className="font-medium text-lg text-primary">
+                          AED {Number(quote.totalCost).toFixed(2)}
+                        </span>
+                      </div>
+                      
+                      {quote.estimatedDuration && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Duration</span>
+                          <span>{quote.estimatedDuration}</span>
+                        </div>
+                      )}
+                      
+                      {quote.warranty && (
+                        <div className="flex justify-between text-sm">
+                          <span className="text-gray-600">Warranty</span>
+                          <span>{quote.warranty}</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {quote.notes && (
+                      <div className="mb-3">
+                        <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+                          {quote.notes}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div className="flex space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => quote.company && handleContactCompany(quote.company.id)}
+                        data-testid={`button-contact-${quote.id}`}
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        Contact
+                      </Button>
+                      
+                      {!quote.isAccepted && job.status === 'quoted' && (
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleAcceptQuote(quote.id)}
+                          disabled={acceptQuoteMutation.isPending}
+                          data-testid={`button-accept-${quote.id}`}
+                        >
+                          {acceptQuoteMutation.isPending ? "Accepting..." : "Accept"}
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        )}
 
-        {/* Cost Breakdown */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Cost Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Part Cost</span>
-                <span>AED 280.00</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Labor Cost</span>
-                <span>AED 120.00</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Service Fee</span>
-                <span>AED 50.00</span>
-              </div>
-              <div className="border-t pt-2 flex justify-between font-semibold">
-                <span>Total</span>
-                <span className="text-primary" data-testid="text-total-cost">
-                  {mockJobDetails.actualPrice}
-                </span>
-              </div>
+        {/* No Quotes State */}
+        {quotes.length === 0 && !quotesLoading && job.status === 'pending' && (
+          <div className="px-4 text-center">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <h3 className="font-medium text-yellow-800 mb-1">Waiting for Quotes</h3>
+              <p className="text-sm text-yellow-700">
+                Companies will send you quotes soon. You'll be notified when they arrive.
+              </p>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Warranty Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Warranty</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-700" data-testid="text-warranty">
-              {mockJobDetails.warranty}
-            </p>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        {mockJobDetails.status === 'completed' && (
-          <div className="space-y-3">
-            <Button 
-              className="w-full bg-accent hover:bg-orange-600"
-              onClick={handleRateService}
-              data-testid="button-rate-service"
-            >
-              Rate This Service
-            </Button>
-            <Button 
-              variant="outline" 
-              className="w-full"
-              onClick={handleMessage}
-              data-testid="button-contact-support"
-            >
-              Contact Support
-            </Button>
           </div>
         )}
       </main>

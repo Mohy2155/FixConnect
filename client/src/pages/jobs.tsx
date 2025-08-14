@@ -46,7 +46,7 @@ export default function Jobs() {
   // Filter jobs based on active filter
   const filteredJobs = serviceRequests.filter(job => {
     if (activeFilter === 'active') {
-      return ['pending', 'quoted', 'approved', 'in_progress'].includes(job.status);
+      return job.status && ['pending', 'quoted', 'approved', 'in_progress'].includes(job.status);
     }
     if (activeFilter === 'completed') {
       return job.status === 'completed';
@@ -65,7 +65,7 @@ export default function Jobs() {
 
   const statusCounts = {
     all: serviceRequests.length,
-    active: serviceRequests.filter(r => ['pending', 'quoted', 'approved', 'in_progress'].includes(r.status)).length,
+    active: serviceRequests.filter(r => r.status && ['pending', 'quoted', 'approved', 'in_progress'].includes(r.status)).length,
     completed: serviceRequests.filter(r => r.status === 'completed').length,
   };
 
