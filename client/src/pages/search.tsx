@@ -30,6 +30,11 @@ export default function Search() {
     queryKey: ['/api/categories'],
   });
 
+  // Fetch all companies from API
+  const { data: companies = [], isLoading: companiesLoading } = useQuery<Company[]>({
+    queryKey: ['/api/companies'],
+  });
+
   // Mock companies data for search results
   const mockCompanies = [
     {
@@ -96,7 +101,7 @@ export default function Search() {
     navigate('/');
   };
 
-  const handleCategorySelect = (category: ServiceCategory) => {
+  const handleCategorySelect = (category: any) => {
     setSelectedCategory(category.id);
   };
 
@@ -110,40 +115,56 @@ export default function Search() {
     // The filteredCompanies and sortedCompanies already handle the search
   };
 
-  // Filter companies based on search criteria
-  const filteredCompanies = mockCompanies.filter(company => {
-    const matchesSearch = !searchQuery || 
-      company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.specialties.some(specialty => specialty.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Universal search function that matches any text across all company fields
+  const filteredCompanies = companies.filter(company => {
+    if (!searchQuery) return true;
     
-    const matchesArea = !selectedArea || selectedArea === 'all-areas' ||
-      company.serviceAreas.includes(selectedArea);
-
-    // Enhanced category filtering - match against service categories
-    const matchesCategory = !selectedCategory || selectedCategory === 'all' ||
-      categories.some(cat => 
-        cat.id === selectedCategory && 
-        (cat.name.toLowerCase().includes(company.name.toLowerCase()) ||
-         company.description.toLowerCase().includes(cat.name.toLowerCase()) ||
-         company.specialties.some(spec => spec.toLowerCase().includes(cat.name.toLowerCase())))
-      );
-
-    return matchesSearch && matchesArea && matchesCategory;
+    const query = searchQuery.toLowerCase();
+    const searchableText = [
+      company.name,
+      company.description || '',
+      company.licenseNumber,
+      ...(company.serviceAreas || []),
+      ...(company.specialties || [])
+    ].join(' ').toLowerCase();
+    
+    return searchableText.includes(query);
+  }).filter(company => {
+    // Area filtering
+    if (selectedArea && selectedArea !== 'all-areas') {
+      return company.serviceAreas?.includes(selectedArea);
+    }
+    return true;
+  }).filter(company => {
+    // Category filtering
+    if (selectedCategory && selectedCategory !== 'all') {
+      const category = categories.find(cat => cat.id === selectedCategory);
+      if (category) {
+        const categoryName = category.name.toLowerCase();
+        const companyText = [
+          company.name,
+          company.description || '',
+          ...(company.specialties || [])
+        ].join(' ').toLowerCase();
+        return companyText.includes(categoryName);
+      }
+    }
+    return true;
   });
 
   // Sort companies
   const sortedCompanies = [...filteredCompanies].sort((a, b) => {
     switch (sortBy) {
       case 'rating':
-        return Number(b.rating) - Number(a.rating);
+        return (Number(b.rating) || 0) - (Number(a.rating) || 0);
       case 'distance':
-        return parseFloat(a.distance) - parseFloat(b.distance);
+        // Sort by name if no distance data
+        return a.name.localeCompare(b.name);
       case 'price':
-        // Simplified price comparison
-        return 0;
+        // Sort by name if no price data
+        return a.name.localeCompare(b.name);
       default:
-        return 0;
+        return a.name.localeCompare(b.name);
     }
   });
 
@@ -279,7 +300,18 @@ export default function Search() {
             </h3>
           </div>
 
-          {sortedCompanies.length > 0 ? (
+          {companiesLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardContent className="p-4">
+                    <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : sortedCompanies.length > 0 ? (
             <div className="space-y-3">
               {sortedCompanies.map((company) => (
                 <CompanyCard

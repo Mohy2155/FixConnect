@@ -327,6 +327,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all companies for search
+  app.get('/api/companies', async (req, res) => {
+    try {
+      const companies = await storage.getAllCompanies();
+      res.json(companies);
+    } catch (error) {
+      console.error('Companies fetch error:', error);
+      res.status(500).json({ message: 'Failed to fetch companies' });
+    }
+  });
+
   // Company dashboard routes
   app.get('/api/companies/profile', isAuthenticated, async (req: any, res) => {
     try {
