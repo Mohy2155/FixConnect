@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select-fixed";
 import { Badge } from "@/components/ui/badge";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { ServiceCategories } from "@/components/service-categories";
@@ -116,7 +116,7 @@ export default function Search() {
       company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       company.description.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesArea = !selectedArea || 
+    const matchesArea = !selectedArea || selectedArea === 'all-areas' ||
       company.serviceAreas.includes(selectedArea);
 
     // Category filtering would require additional data structure
@@ -183,7 +183,7 @@ export default function Search() {
                 <SelectValue placeholder="All Areas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Areas</SelectItem>
+                <SelectItem value="all-areas">All Areas</SelectItem>
                 {uaeAreas.map((area) => (
                   <SelectItem key={area} value={area}>
                     {area}
