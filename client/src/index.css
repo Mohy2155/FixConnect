@@ -131,30 +131,67 @@
     background-color: hsl(var(--surface));
   }
   
-  /* Fix z-index layering for proper UI stacking */
-  .z-dropdown {
-    z-index: 99999 !important;
+  /* Create stacking context layers */
+  @layer base, components, utilities, overlays;
+  
+  /* Base application layer */
+  @layer base {
+    .app-content {
+      contain: layout style;
+      position: relative;
+      z-index: 0;
+    }
   }
   
-  .z-tooltip {
-    z-index: 100000 !important;
+  /* Component layer for UI elements */
+  @layer components {
+    .z-navigation {
+      z-index: 100;
+    }
   }
   
-  .z-modal {
-    z-index: 100001 !important;
+  /* Overlay layer for dropdowns, modals, tooltips */
+  @layer overlays {
+    .z-dropdown,
+    [data-radix-select-content],
+    [data-radix-popper-content-wrapper] {
+      position: fixed !important;
+      z-index: 2147483647 !important;
+      isolation: isolate;
+    }
+    
+    .z-tooltip,
+    [data-radix-tooltip-content] {
+      position: fixed !important;
+      z-index: 2147483646 !important;
+      isolation: isolate;
+    }
+    
+    .z-modal,
+    [data-radix-dialog-content] {
+      position: fixed !important;
+      z-index: 2147483645 !important;
+      isolation: isolate;
+    }
   }
   
-  .z-navigation {
-    z-index: 1000 !important;
-  }
-  
-  /* Ensure select content appears above all other elements */
-  [data-radix-select-content] {
-    z-index: 99999 !important;
-  }
-  
-  /* Fix portal content positioning */
+  /* Force all Radix portals to use maximum z-index */
   [data-radix-portal] {
-    z-index: 99999 !important;
+    z-index: 2147483647 !important;
+  }
+  
+  /* Ensure select trigger doesn't interfere */
+  [data-radix-select-trigger] {
+    position: relative;
+    z-index: 1;
+  }
+  
+  /* Nuclear option: Force all Radix components above everything */
+  [data-radix-select-content],
+  [data-radix-popper-content-wrapper],
+  [data-radix-tooltip-content] {
+    z-index: 2147483647 !important;
+    position: fixed !important;
+    isolation: isolate !important;
   }
 }

@@ -1,4 +1,5 @@
 import { Switch, Route } from "wouter";
+import { useEffect } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -42,6 +43,43 @@ function Router() {
 }
 
 function App() {
+  // Alternative approach: Use JavaScript to fix z-index issues
+  useEffect(() => {
+    const fixDropdownZIndex = () => {
+      // Force all dropdown and tooltip elements to highest z-index
+      const selectors = [
+        '[data-radix-select-content]',
+        '[data-radix-popper-content-wrapper]',
+        '[data-radix-tooltip-content]',
+        '[data-radix-dialog-content]',
+        '[data-radix-portal]'
+      ];
+      
+      selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        elements.forEach((element) => {
+          const htmlElement = element as HTMLElement;
+          htmlElement.style.zIndex = '2147483647';
+          htmlElement.style.position = 'fixed';
+          htmlElement.style.isolation = 'isolate';
+        });
+      });
+    };
+
+    // Apply fix on initial load
+    fixDropdownZIndex();
+    
+    // Apply fix on DOM changes
+    const observer = new MutationObserver(fixDropdownZIndex);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true
+    });
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
