@@ -147,6 +147,12 @@
   @layer components {
     .z-navigation {
       z-index: 100;
+      background-color: white;
+      backdrop-filter: blur(8px);
+    }
+    
+    .dark .z-navigation {
+      background-color: rgb(17 24 39);
     }
   }
   
