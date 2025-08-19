@@ -44,7 +44,7 @@ export default function Search() {
       reviewCount: 127,
       responseTime: '2-4 hours',
       serviceAreas: ['Dubai', 'Sharjah'],
-      specialties: ['Residential', 'Commercial'],
+      specialties: ['Plumbing', 'Water Heater', 'Pipe Repair'],
       createdAt: new Date(),
       updatedAt: new Date(),
       distance: '3.2 km away',
@@ -62,7 +62,7 @@ export default function Search() {
       reviewCount: 89,
       responseTime: '1-2 hours',
       serviceAreas: ['Dubai', 'Abu Dhabi'],
-      specialties: ['Emergency', 'Premium'],
+      specialties: ['Emergency Repairs', 'Premium Service', 'All Maintenance'],
       createdAt: new Date(),
       updatedAt: new Date(),
       distance: '1.8 km away',
@@ -72,7 +72,7 @@ export default function Search() {
       id: 'company-3',
       userId: 'user-3',
       name: 'Emirates Electrical Solutions',
-      description: 'Licensed electrical contractors serving all of UAE',
+      description: 'Licensed electrical contractors serving all of UAE with electrical installations and repairs',
       logo: null,
       licenseNumber: 'EL-2023-003',
       isVerified: true,
@@ -80,7 +80,7 @@ export default function Search() {
       reviewCount: 156,
       responseTime: '3-5 hours',
       serviceAreas: ['Dubai', 'Sharjah', 'Ajman'],
-      specialties: ['Residential', 'Commercial', 'Industrial'],
+      specialties: ['Electrical', 'Wiring', 'Circuit Breakers', 'Lighting Installation'],
       createdAt: new Date(),
       updatedAt: new Date(),
       distance: '4.5 km away',
@@ -114,13 +114,20 @@ export default function Search() {
   const filteredCompanies = mockCompanies.filter(company => {
     const matchesSearch = !searchQuery || 
       company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      company.description.toLowerCase().includes(searchQuery.toLowerCase());
+      company.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      company.specialties.some(specialty => specialty.toLowerCase().includes(searchQuery.toLowerCase()));
     
     const matchesArea = !selectedArea || selectedArea === 'all-areas' ||
       company.serviceAreas.includes(selectedArea);
 
-    // Category filtering would require additional data structure
-    const matchesCategory = !selectedCategory; // Simplified for now
+    // Enhanced category filtering - match against service categories
+    const matchesCategory = !selectedCategory || selectedCategory === 'all' ||
+      categories.some(cat => 
+        cat.id === selectedCategory && 
+        (cat.name.toLowerCase().includes(company.name.toLowerCase()) ||
+         company.description.toLowerCase().includes(cat.name.toLowerCase()) ||
+         company.specialties.some(spec => spec.toLowerCase().includes(cat.name.toLowerCase())))
+      );
 
     return matchesSearch && matchesArea && matchesCategory;
   });
