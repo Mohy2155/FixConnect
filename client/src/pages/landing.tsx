@@ -8,28 +8,26 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-primary text-white px-4 py-6">
-        <div className="max-w-sm mx-auto">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <Wrench className="h-8 w-8" />
-              <h1 className="text-2xl font-bold">FixConnect</h1>
+        <div className="min-h-screen bg-background">
+          {/* Header */}
+          <header className="bg-primary text-white px-4 py-6">
+            <div className="max-w-sm mx-auto">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3">
+                  <Wrench className="h-8 w-8" />
+                  <h1 className="text-2xl font-bold text-opacity-100">FixConnect</h1> {/* Updated: Added text-opacity-100 */}
+                </div>
+                <Button
+                  onClick={handleLogin}
+                  variant="secondary"
+                  size="sm"
+                  data-testid="button-login"
+                >
+                  Login
+                </Button>
+              </div>
+              <p className="text-blue-100 text-lg text-center text-opacity-100">UAE's Premier Home Maintenance Platform</p> {/* Updated: Added text-opacity-100 */}
             </div>
-            <Button 
-              onClick={handleLogin}
-              variant="secondary"
-              size="sm"
-              data-testid="button-login"
-            >
-              Login
-            </Button>
-          </div>
-          <p className="text-blue-100 text-lg text-center">
-            UAE's Premier Home Maintenance Platform
-          </p>
-        </div>
       </header>
 
       {/* Hero Section */}
@@ -46,11 +44,12 @@ export default function Landing() {
             Connect with Certified Professionals
           </h2>
           <p className="text-gray-600 mb-6">
-            Get your home maintenance needs handled by trusted, verified companies across the UAE
+            Get your home maintenance needs handled by trusted, verified
+            companies across the UAE
           </p>
-          <Button 
+          <Button
             onClick={handleLogin}
-            size="lg" 
+            size="lg"
             className="w-full bg-primary hover:bg-blue-700"
             data-testid="button-get-started"
           >
@@ -62,7 +61,9 @@ export default function Landing() {
       {/* Features */}
       <div className="px-4 py-8">
         <div className="max-w-sm mx-auto">
-          <h3 className="text-xl font-bold text-center mb-6">Why Choose FixConnect?</h3>
+          <h3 className="text-xl font-bold text-center mb-6">
+            Why Choose FixConnect?
+          </h3>
           <div className="space-y-4">
             <Card>
               <CardContent className="p-4">
@@ -135,7 +136,7 @@ export default function Landing() {
                 <p className="text-xs text-gray-600">Pipes, faucets, drains</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4 text-center">
                 <div className="text-3xl mb-2">⚡</div>
@@ -143,7 +144,7 @@ export default function Landing() {
                 <p className="text-xs text-gray-600">Wiring, outlets, lights</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4 text-center">
                 <div className="text-3xl mb-2">❄️</div>
@@ -151,7 +152,7 @@ export default function Landing() {
                 <p className="text-xs text-gray-600">Air conditioning, fans</p>
               </CardContent>
             </Card>
-            
+
             <Card>
               <CardContent className="p-4 text-center">
                 <div className="text-3xl mb-2">📺</div>
@@ -170,9 +171,9 @@ export default function Landing() {
           <p className="text-gray-600 mb-6">
             Join thousands of satisfied homeowners who trust FixConnect
           </p>
-          <Button 
+          <Button
             onClick={handleLogin}
-            size="lg" 
+            size="lg"
             className="w-full bg-success hover:bg-green-600"
             data-testid="button-join-now"
           >

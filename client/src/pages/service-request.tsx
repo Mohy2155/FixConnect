@@ -22,6 +22,9 @@ import { z } from "zod";
 
 const serviceRequestFormSchema = insertServiceRequestSchema.extend({
   preferredDate: z.string().optional(),
+  contactPhone: z.string().min(1, "Contact phone number is required"),
+  propertyType: z.string().min(1, "Property type is required"),
+  emergencyLevel: z.string().min(1, "Emergency level is required"),
 }).omit({
   customerId: true,
   createdAt: true,
@@ -47,7 +50,10 @@ export default function ServiceRequest() {
       title: '',
       description: '',
       address: '',
-      propertyType: 'apartment',
+      contactPhone: '',
+      propertyType: '',
+      emergencyLevel: 'normal',
+      accessInstructions: '',
       priority: 'medium',
       status: 'pending',
     },
@@ -307,7 +313,84 @@ export default function ServiceRequest() {
                             <RadioGroupItem value="villa" id="villa" />
                             <Label htmlFor="villa">Villa</Label>
                           </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="house" id="house" />
+                            <Label htmlFor="house">House</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="office" id="office" />
+                            <Label htmlFor="office">Office</Label>
+                          </div>
                         </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="contactPhone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contact Phone Number *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="+971 50 123 4567" 
+                          {...field} 
+                          data-testid="input-contact-phone"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="emergencyLevel"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Emergency Level *</FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                          className="flex space-x-4"
+                          data-testid="radio-emergency-level"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="normal" id="normal" />
+                            <Label htmlFor="normal">Normal</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="urgent" id="urgent" />
+                            <Label htmlFor="urgent">Urgent</Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="emergency" id="emergency" />
+                            <Label htmlFor="emergency">Emergency</Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="accessInstructions"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Access Instructions</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="How can the technician access your property? (apartment number, building entrance, gate code, etc.)"
+                          className="h-16 resize-none"
+                          {...field}
+                          data-testid="textarea-access-instructions"
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
