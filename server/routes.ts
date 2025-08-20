@@ -380,6 +380,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Logout endpoint
+  app.post('/api/logout', (req, res) => {
+    req.session.destroy((err: any) => {
+      if (err) {
+        console.error('Error destroying session:', err);
+        return res.status(500).json({ message: 'Failed to logout' });
+      }
+      res.clearCookie('connect.sid');
+      res.json({ message: 'Logged out successfully' });
+    });
+  });
+
+  // Role-specific login endpoints
+  app.get('/api/login/homeowner', (req, res) => {
+    req.session.targetRole = 'homeowner';
+    res.redirect('/api/login');
+  });
+
+  app.get('/api/login/company', (req, res) => {
+    req.session.targetRole = 'company';
+    res.redirect('/api/login');
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

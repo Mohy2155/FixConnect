@@ -93,11 +93,11 @@ export const serviceRequests = pgTable("service_requests", {
   partId: varchar("part_id").references(() => serviceParts.id),
   title: varchar("title").notNull(),
   description: text("description").notNull(),
-  propertyType: varchar("property_type").notNull(), // 'apartment', 'villa', 'house', 'office'
+  propertyType: varchar("property_type").default('apartment'), // 'apartment', 'villa', 'house', 'office'
   address: text("address").notNull(),
-  contactPhone: varchar("contact_phone").notNull(), // Required contact number
+  contactPhone: varchar("contact_phone").default(''), // Contact number
   preferredDate: timestamp("preferred_date"),
-  emergencyLevel: varchar("emergency_level").notNull().default('normal'), // 'normal', 'urgent', 'emergency'
+  emergencyLevel: varchar("emergency_level").default('normal'), // 'normal', 'urgent', 'emergency'
   accessInstructions: text("access_instructions"), // How to access the property
   priority: priorityEnum("priority").default('medium'),
   status: jobStatusEnum("status").default('pending'),

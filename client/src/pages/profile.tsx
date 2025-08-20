@@ -286,6 +286,32 @@ export default function Profile() {
                 <Button variant="outline" className="w-full justify-start" data-testid="button-terms">
                   Terms & Conditions
                 </Button>
+                
+                {/* Role Switch Section */}
+                <div className="pt-3 border-t border-gray-200">
+                  <p className="text-sm font-medium mb-3">Account Type</p>
+                  {user?.role === 'homeowner' ? (
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start text-blue-600"
+                      onClick={() => window.location.href = '/api/login/company'}
+                      data-testid="button-switch-to-company"
+                    >
+                      <Building className="h-4 w-4 mr-2" />
+                      Switch to Company Account
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start text-blue-600"
+                      onClick={() => window.location.href = '/api/login/homeowner'}
+                      data-testid="button-switch-to-homeowner"
+                    >
+                      <User className="h-4 w-4 mr-2" />
+                      Switch to Homeowner Account
+                    </Button>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </>
