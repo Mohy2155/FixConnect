@@ -246,6 +246,7 @@ export default function ServiceRequest() {
                         <Input 
                           placeholder="Brief description of the service needed" 
                           {...field} 
+                          className="placeholder:text-gray-400"
                           data-testid="input-title"
                         />
                       </FormControl>
@@ -263,7 +264,7 @@ export default function ServiceRequest() {
                       <FormControl>
                         <Textarea
                           placeholder="Describe the problem in detail..."
-                          className="h-20 resize-none"
+                          className="h-20 resize-none placeholder:text-gray-400"
                           {...field}
                           data-testid="textarea-description"
                         />
@@ -282,7 +283,7 @@ export default function ServiceRequest() {
                       <FormControl>
                         <Textarea
                           placeholder="Full address including building, area, emirate"
-                          className="h-16 resize-none"
+                          className="h-16 resize-none placeholder:text-gray-400"
                           {...field}
                           data-testid="textarea-address"
                         />
@@ -302,7 +303,7 @@ export default function ServiceRequest() {
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value || undefined}
-                          className="flex space-x-6"
+                          className="grid grid-cols-2 gap-3 sm:flex sm:space-x-6"
                           data-testid="radio-property-type"
                         >
                           <div className="flex items-center space-x-2">
@@ -338,6 +339,7 @@ export default function ServiceRequest() {
                         <Input 
                           placeholder="+971 50 123 4567" 
                           {...field} 
+                          className="placeholder:text-gray-400"
                           data-testid="input-contact-phone"
                         />
                       </FormControl>
@@ -387,7 +389,7 @@ export default function ServiceRequest() {
                       <FormControl>
                         <Textarea
                           placeholder="How can the technician access your property? (apartment number, building entrance, gate code, etc.)"
-                          className="h-16 resize-none"
+                          className="h-16 resize-none placeholder:text-gray-400"
                           {...field}
                           data-testid="textarea-access-instructions"
                         />
