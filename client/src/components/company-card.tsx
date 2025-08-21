@@ -36,10 +36,10 @@ export function CompanyCard({ company, onRequestQuote }: CompanyCardProps) {
                 {company.name}
               </h4>
               <Stars 
-                rating={Number(company.rating)} 
+                rating={Number(company.rating) || 0} 
                 size="sm" 
                 showNumber 
-                reviewCount={company.reviewCount}
+                reviewCount={company.reviewCount || undefined}
               />
             </div>
             

@@ -75,7 +75,25 @@ export default function CompanyDashboard() {
   };
 
   const handleSubmitQuote = (jobId: string) => {
-    navigate(`/submit-quote/${jobId}`);
+    // For now, use a standard quote amount
+    // In real implementation, this would open a modal with quote form
+    const amount = 500; // AED
+    
+    if (!company) {
+      toast({
+        title: "Error",
+        description: "Company profile not found",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    createQuoteMutation.mutate({
+      serviceRequestId: jobId,
+      companyId: company.id,
+      amount: amount,
+      notes: `Quote for service request ${jobId}`,
+    });
   };
 
   const handleContactCustomer = (jobId: string) => {

@@ -49,36 +49,20 @@ export default function Home() {
     enabled: !!user,
   });
 
-  // Role switching mutation
-  const roleUpdateMutation = useMutation({
-    mutationFn: async (role: 'homeowner' | 'company') => {
-      await apiRequest('POST', '/api/auth/user/role', { role });
-    },
-    onSuccess: () => {
-      toast({
-        title: "Role Updated",
-        description: `Switched to ${userRole === 'homeowner' ? 'Company' : 'Homeowner'} mode`,
-      });
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized", 
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-      toast({
-        title: "Error",
-        description: "Failed to update role",
-        variant: "destructive",
-      });
-    },
-  });
+  // Role switching - redirects to proper auth endpoints
+  const handleRoleSwitch = (role: 'homeowner' | 'company') => {
+    if (role === userRole) return; // No change needed
+    
+    toast({
+      title: "Switching Account Type",
+      description: "Redirecting to re-authenticate...",
+    });
+    
+    // Redirect to role-specific login
+    setTimeout(() => {
+      window.location.href = `/api/login/${role}`;
+    }, 500);
+  };
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -97,11 +81,6 @@ export default function Home() {
       setUserRole(user.role as 'homeowner' | 'company');
     }
   }, [user, authLoading, toast]);
-
-  const handleRoleSwitch = (role: 'homeowner' | 'company') => {
-    setUserRole(role);
-    roleUpdateMutation.mutate(role);
-  };
 
   const handleCategorySelect = (category: ServiceCategory) => {
     navigate(`/service-request?categoryId=${category.id}`);
@@ -148,6 +127,7 @@ export default function Home() {
               variant="ghost" 
               size="sm"
               className="p-2 hover:bg-blue-600 text-white"
+              onClick={() => navigate('/messages')}
               data-testid="button-notifications"
             >
               <Bell className="h-5 w-5" />
@@ -243,7 +223,7 @@ export default function Home() {
                 </div>
               ) : (
                 <ServiceCategories
-                  categories={categories.map(cat => ({ ...cat, description: cat.description || undefined }))}
+                  categories={categories}
                   onCategorySelect={handleCategorySelect}
                   className="mb-4"
                 />

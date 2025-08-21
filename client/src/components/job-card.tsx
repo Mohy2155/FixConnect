@@ -65,10 +65,10 @@ export function JobCard({ job, onViewDetails, onRateService }: JobCardProps) {
         <div className="flex justify-between items-center mb-3">
           <div className="flex items-center space-x-2">
             <Badge 
-              className={statusColors[job.status]}
+              className={job.status ? statusColors[job.status as keyof typeof statusColors] || "bg-gray-100 text-gray-800" : "bg-gray-100 text-gray-800"}
               data-testid={`badge-status-${job.id}`}
             >
-              {statusLabels[job.status]}
+              {job.status ? statusLabels[job.status as keyof typeof statusLabels] || job.status : "Unknown"}
             </Badge>
             {job.estimatedPrice && (
               <span className="text-sm font-medium text-gray-800" data-testid={`text-price-${job.id}`}>

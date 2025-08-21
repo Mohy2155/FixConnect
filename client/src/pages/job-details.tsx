@@ -78,12 +78,23 @@ export default function JobDetails() {
     navigate('/jobs');
   };
 
-  const handleContactCompany = (companyId: string) => {
-    navigate(`/messages?jobId=${jobId}&companyId=${companyId}`);
+  const handleContactService = () => {
+    navigate(`/messages?jobId=${jobId}`);
   };
 
   const handleAcceptQuote = (quoteId: string) => {
     acceptQuoteMutation.mutate(quoteId);
+  };
+
+  const handleRejectQuote = (quoteId: string) => {
+    toast({
+      title: "Quote Rejected",
+      description: "The quote has been rejected. You can still accept other quotes.",
+    });
+  };
+
+  const handleContactCompany = (companyId: string) => {
+    navigate(`/messages?jobId=${jobId}&companyId=${companyId}`);
   };
 
   const getStatusColor = (status?: string | null) => {

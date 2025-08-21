@@ -144,6 +144,8 @@ export default function Messages() {
     }
   };
 
+
+
   const handleThreadSelect = (threadId: string) => {
     setSelectedThread(threadId);
   };
@@ -215,6 +217,7 @@ export default function Messages() {
               variant="ghost"
               size="sm"
               className="p-2 hover:bg-blue-600 text-white"
+              onClick={() => toast({ title: "Search Messages", description: "Message search coming soon!" })}
               data-testid="button-search-messages"
             >
               <Search className="h-4 w-4" />

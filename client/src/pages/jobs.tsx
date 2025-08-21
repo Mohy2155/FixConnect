@@ -91,6 +91,7 @@ export default function Jobs() {
               variant="ghost"
               size="sm"
               className="p-2 hover:bg-blue-600 text-white"
+              onClick={() => navigate('/search')}
               data-testid="button-search"
             >
               <Search className="h-4 w-4" />
@@ -99,6 +100,7 @@ export default function Jobs() {
               variant="ghost"
               size="sm"
               className="p-2 hover:bg-blue-600 text-white"
+              onClick={() => toast({ title: "Filters", description: "Advanced filters coming soon!" })}
               data-testid="button-filter"
             >
               <Filter className="h-4 w-4" />

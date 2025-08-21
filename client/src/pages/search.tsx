@@ -360,6 +360,7 @@ export default function Search() {
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
+                onClick={() => navigate('/service-request')}
                 data-testid="button-schedule-maintenance"
               >
                 📅 Schedule Maintenance
@@ -367,6 +368,7 @@ export default function Search() {
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
+                onClick={() => navigate('/service-request')}
                 data-testid="button-get-quote"
               >
                 💰 Get Multiple Quotes

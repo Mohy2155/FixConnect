@@ -274,16 +274,36 @@ export default function Profile() {
                 <CardTitle className="text-lg">Account Settings</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full justify-start" data-testid="button-notifications">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  onClick={() => toast({ title: "Feature Coming Soon", description: "Notification settings will be available in the next update" })}
+                  data-testid="button-notifications"
+                >
                   Notification Settings
                 </Button>
-                <Button variant="outline" className="w-full justify-start" data-testid="button-privacy">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  onClick={() => toast({ title: "Feature Coming Soon", description: "Privacy & security settings will be available in the next update" })}
+                  data-testid="button-privacy"
+                >
                   Privacy & Security
                 </Button>
-                <Button variant="outline" className="w-full justify-start" data-testid="button-help">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  onClick={() => toast({ title: "Help & Support", description: "Contact support@fixconnect.ae for assistance" })}
+                  data-testid="button-help"
+                >
                   Help & Support
                 </Button>
-                <Button variant="outline" className="w-full justify-start" data-testid="button-terms">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  onClick={() => toast({ title: "Terms & Conditions", description: "Please visit our website for full terms and conditions" })}
+                  data-testid="button-terms"
+                >
                   Terms & Conditions
                 </Button>
                 
