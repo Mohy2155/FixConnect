@@ -303,24 +303,24 @@ export default function ServiceRequest() {
                         <RadioGroup
                           onValueChange={field.onChange}
                           defaultValue={field.value || undefined}
-                          className="grid grid-cols-2 gap-3 sm:flex sm:space-x-6"
+                          className="flex flex-wrap gap-3"
                           data-testid="radio-property-type"
                         >
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 min-w-0 whitespace-nowrap">
                             <RadioGroupItem value="apartment" id="apartment" />
-                            <Label htmlFor="apartment">Apartment</Label>
+                            <Label htmlFor="apartment" className="text-sm">Apartment</Label>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 min-w-0 whitespace-nowrap">
                             <RadioGroupItem value="villa" id="villa" />
-                            <Label htmlFor="villa">Villa</Label>
+                            <Label htmlFor="villa" className="text-sm">Villa</Label>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 min-w-0 whitespace-nowrap">
                             <RadioGroupItem value="house" id="house" />
-                            <Label htmlFor="house">House</Label>
+                            <Label htmlFor="house" className="text-sm">House</Label>
                           </div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 min-w-0 whitespace-nowrap">
                             <RadioGroupItem value="office" id="office" />
-                            <Label htmlFor="office">Office</Label>
+                            <Label htmlFor="office" className="text-sm">Office</Label>
                           </div>
                         </RadioGroup>
                       </FormControl>
