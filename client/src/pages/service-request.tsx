@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { BottomNavigation } from "@/components/bottom-navigation";
-import { ArrowLeft, Camera } from "lucide-react";
+import { ArrowLeft, Camera, X } from "lucide-react";
 import { useLocation, useRoute } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { insertServiceRequestSchema, ServiceCategory, ServicePart } from "@shared/schema";
@@ -39,6 +39,8 @@ export default function ServiceRequest() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [match] = useRoute('/service-request');
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   
   const urlParams = new URLSearchParams(window.location.search);
   const initialCategoryId = urlParams.get('categoryId');
@@ -74,6 +76,23 @@ export default function ServiceRequest() {
 
   // Get selected category for display
   const selectedCategory = categories.find(cat => cat.id === selectedCategoryId);
+
+  // Photo upload handlers
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      const newFiles = Array.from(files);
+      setSelectedFiles(prev => [...prev, ...newFiles]);
+    }
+  };
+
+  const handlePhotoUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const removeFile = (index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
 
   // Service request creation mutation
   const createRequestMutation = useMutation({
@@ -465,17 +484,44 @@ export default function ServiceRequest() {
                 {/* Photo Upload Section */}
                 <div>
                   <Label className="text-sm font-medium">Upload Photos (Optional)</Label>
-                  <div className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center mt-2">
+                  <div 
+                    className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center mt-2 cursor-pointer hover:border-gray-300 transition-colors"
+                    onClick={handlePhotoUploadClick}
+                  >
                     <Camera className="h-8 w-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-500">Tap to add photos of the issue</p>
                     <Input 
+                      ref={fileInputRef}
                       type="file" 
                       className="hidden" 
                       multiple 
                       accept="image/*"
+                      onChange={handleFileSelect}
                       data-testid="input-photos"
                     />
                   </div>
+                  
+                  {/* Selected Photos Preview */}
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-3 grid grid-cols-3 gap-2">
+                      {selectedFiles.map((file, index) => (
+                        <div key={index} className="relative">
+                          <div className="aspect-square bg-gray-100 rounded-lg flex items-center justify-center text-xs text-gray-500 p-2 break-words">
+                            {file.name}
+                          </div>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                            onClick={() => removeFile(index)}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
                 <Button 
