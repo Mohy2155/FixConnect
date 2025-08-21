@@ -393,12 +393,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Role-specific login endpoints
-  app.get('/api/login/homeowner', (req, res) => {
+  app.get('/api/login/homeowner', (req: any, res) => {
     req.session.targetRole = 'homeowner';
     res.redirect('/api/login');
   });
 
-  app.get('/api/login/company', (req, res) => {
+  app.get('/api/login/company', (req: any, res) => {
     req.session.targetRole = 'company';
     res.redirect('/api/login');
   });

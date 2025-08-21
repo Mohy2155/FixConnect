@@ -223,7 +223,9 @@ export default function Home() {
                 </div>
               ) : (
                 <ServiceCategories
-                  categories={categories}
+                  categories={categories.filter((category, index, self) => 
+                    index === self.findIndex(c => c.name === category.name)
+                  ).slice(0, 4)} // Remove duplicates by name and show only first 4
                   onCategorySelect={handleCategorySelect}
                   className="mb-4"
                 />
