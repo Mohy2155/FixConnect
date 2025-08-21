@@ -129,6 +129,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update user profile
+  app.put('/api/users/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const authenticatedUserId = req.user.claims.sub;
+      
+      // Ensure user can only update their own profile
+      if (userId !== authenticatedUserId) {
+        return res.status(403).json({ message: 'Forbidden: Can only update your own profile' });
+      }
+      
+      const { firstName, lastName, phone, address } = req.body;
+      
+      // Get current user data to preserve other fields
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Update user profile in database via upsert
+      const updatedUser = await storage.upsertUser({
+        id: userId,
+        email: currentUser.email,
+        role: currentUser.role,
+        firstName: firstName || currentUser.firstName,
+        lastName: lastName || currentUser.lastName,
+        phone: phone || currentUser.phone,
+        address: address || currentUser.address,
+        profileImageUrl: currentUser.profileImageUrl,
+      });
+      
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      res.status(500).json({ message: 'Failed to update profile' });
+    }
+  });
+
   // Service Categories
   app.get('/api/categories', async (req, res) => {
     try {

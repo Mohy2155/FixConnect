@@ -66,6 +66,18 @@ export default function Profile() {
     },
   });
 
+  // Update form values when user data changes
+  useEffect(() => {
+    if (user) {
+      profileForm.reset({
+        firstName: user.firstName || '',
+        lastName: user.lastName || '',
+        phone: user.phone || '',
+        address: user.address || '',
+      });
+    }
+  }, [user, profileForm]);
+
   // Personal profile update mutation
   const profileMutation = useMutation({
     mutationFn: async (data: ProfileForm) => {
