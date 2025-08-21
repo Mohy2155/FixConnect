@@ -27,7 +27,15 @@ const companyFormSchema = insertCompanySchema.omit({
   updatedAt: true,
 });
 
+const profileFormSchema = z.object({
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  phone: z.string().optional(),
+  address: z.string().optional(),
+});
+
 type CompanyForm = z.infer<typeof companyFormSchema>;
+type ProfileForm = z.infer<typeof profileFormSchema>;
 
 export default function Profile() {
   const { user, isLoading: authLoading } = useAuth();
@@ -45,6 +53,49 @@ export default function Profile() {
       responseTime: '2-4 hours',
       serviceAreas: ['Dubai'],
       specialties: [],
+    },
+  });
+
+  const profileForm = useForm<ProfileForm>({
+    resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      firstName: user?.firstName || '',
+      lastName: user?.lastName || '',
+      phone: user?.phone || '',
+      address: user?.address || '',
+    },
+  });
+
+  // Personal profile update mutation
+  const profileMutation = useMutation({
+    mutationFn: async (data: ProfileForm) => {
+      return await apiRequest('PUT', `/api/users/${user?.id}`, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Personal profile updated successfully",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
     },
   });
 
@@ -128,6 +179,10 @@ export default function Profile() {
 
   const onSubmit = (data: CompanyForm) => {
     companyMutation.mutate(data);
+  };
+
+  const onProfileSubmit = (data: ProfileForm) => {
+    profileMutation.mutate(data);
   };
 
   if (authLoading) {
@@ -235,36 +290,138 @@ export default function Profile() {
                   </div>
                 </div>
 
-                <div className="space-y-3 text-sm">
-                  <div>
-                    <span className="font-medium">Phone:</span>
-                    <span className="ml-2 text-gray-600" data-testid="text-user-phone">
-                      {user?.phone || 'Not provided'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-medium">Address:</span>
-                    <span className="ml-2 text-gray-600" data-testid="text-user-address">
-                      {user?.address || 'Not provided'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-medium">Member since:</span>
-                    <span className="ml-2 text-gray-600">
-                      {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
-                    </span>
-                  </div>
-                </div>
+                {!isEditing ? (
+                  <>
+                    <div className="space-y-3 text-sm">
+                      <div>
+                        <span className="font-medium">Phone:</span>
+                        <span className="ml-2 text-gray-600" data-testid="text-user-phone">
+                          {user?.phone || 'Not provided'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Address:</span>
+                        <span className="ml-2 text-gray-600" data-testid="text-user-address">
+                          {user?.address || 'Not provided'}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="font-medium">Member since:</span>
+                        <span className="ml-2 text-gray-600">
+                          {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'Unknown'}
+                        </span>
+                      </div>
+                    </div>
 
-                <Button 
-                  className="w-full mt-4" 
-                  variant="outline"
-                  onClick={() => setIsEditing(true)}
-                  data-testid="button-edit-profile"
-                >
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </Button>
+                    <Button 
+                      className="w-full mt-4" 
+                      variant="outline"
+                      onClick={() => setIsEditing(true)}
+                      data-testid="button-edit-profile"
+                    >
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Profile
+                    </Button>
+                  </>
+                ) : (
+                  /* Personal Profile Edit Form */
+                  <Form {...profileForm}>
+                    <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4 mt-4">
+                      <div className="grid grid-cols-2 gap-3">
+                        <FormField
+                          control={profileForm.control}
+                          name="firstName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>First Name</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="First name" 
+                                  {...field} 
+                                  data-testid="input-first-name"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={profileForm.control}
+                          name="lastName"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Last Name</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Last name" 
+                                  {...field} 
+                                  data-testid="input-last-name"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+
+                      <FormField
+                        control={profileForm.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Phone Number</FormLabel>
+                            <FormControl>
+                              <Input 
+                                placeholder="+971 50 123 4567" 
+                                {...field} 
+                                data-testid="input-phone"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={profileForm.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Address</FormLabel>
+                            <FormControl>
+                              <Textarea
+                                placeholder="Full address"
+                                className="h-16 resize-none"
+                                {...field}
+                                data-testid="textarea-address"
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="flex space-x-3">
+                        <Button 
+                          type="submit"
+                          className="flex-1"
+                          disabled={profileMutation.isPending}
+                          data-testid="button-save-profile"
+                        >
+                          {profileMutation.isPending ? "Saving..." : "Save Changes"}
+                        </Button>
+                        <Button 
+                          type="button"
+                          variant="outline" 
+                          onClick={() => setIsEditing(false)}
+                          data-testid="button-cancel-profile-edit"
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </form>
+                  </Form>
+                )}
               </CardContent>
             </Card>
 
