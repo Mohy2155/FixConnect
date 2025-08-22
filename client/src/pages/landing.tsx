@@ -1,10 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Wrench, Shield, Clock, Star, MapPin, Phone } from "lucide-react";
+import { Wrench, Shield, Clock, Star, MapPin, Phone, Home, Building2, Users, Zap, CheckCircle } from "lucide-react";
 
 export default function Landing() {
-  const handleLogin = () => {
+  const handleHomeownerLogin = () => {
     window.location.href = "/api/login";
+  };
+
+  const handleCompanyLogin = () => {
+    window.location.href = "/api/login/company";
   };
 
   return (
@@ -12,21 +16,11 @@ export default function Landing() {
           {/* Header */}
           <header className="bg-primary text-white px-4 py-6">
             <div className="max-w-sm mx-auto">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center space-x-3">
-                  <Wrench className="h-8 w-8" />
-                  <h1 className="text-2xl font-bold text-opacity-100">FixConnect</h1> {/* Updated: Added text-opacity-100 */}
-                </div>
-                <Button
-                  onClick={handleLogin}
-                  variant="secondary"
-                  size="sm"
-                  data-testid="button-login"
-                >
-                  Login
-                </Button>
+              <div className="flex items-center justify-center space-x-3 mb-4">
+                <Wrench className="h-8 w-8" />
+                <h1 className="text-2xl font-bold">FixConnect</h1>
               </div>
-              <p className="text-blue-100 text-lg text-center text-opacity-100">UAE's Premier Home Maintenance Platform</p> {/* Updated: Added text-opacity-100 */}
+              <p className="text-blue-100 text-lg text-center">UAE's Premier Home Maintenance Platform</p>
             </div>
       </header>
 
@@ -41,85 +35,118 @@ export default function Landing() {
             />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">
-            Connect with Certified Professionals
+            Choose Your Path
           </h2>
-          <p className="text-gray-600 mb-6">
-            Get your home maintenance needs handled by trusted, verified
-            companies across the UAE
+          <p className="text-gray-600 mb-8">
+            Whether you need maintenance services or provide them, FixConnect connects the UAE maintenance community
           </p>
-          <Button
-            onClick={handleLogin}
-            size="lg"
-            className="w-full bg-primary hover:bg-blue-700"
-            data-testid="button-get-started"
-          >
-            Get Started
-          </Button>
+
+          {/* User Type Selection */}
+          <div className="space-y-4">
+            <Card className="p-1 hover:shadow-lg transition-shadow cursor-pointer" onClick={handleHomeownerLogin}>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Home className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="font-semibold text-gray-900">I'm a Homeowner</h3>
+                    <p className="text-sm text-gray-600">Find trusted maintenance professionals</p>
+                  </div>
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-lg">→</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="p-1 hover:shadow-lg transition-shadow cursor-pointer" onClick={handleCompanyLogin}>
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <Building2 className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div className="flex-1 text-left">
+                    <h3 className="font-semibold text-gray-900">I'm a Service Company</h3>
+                    <p className="text-sm text-gray-600">Grow your business with new customers</p>
+                  </div>
+                  <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
+                    <span className="text-white text-lg">→</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
-      {/* Features */}
-      <div className="px-4 py-8">
+      {/* Features for Both User Types */}
+      <div className="px-4 py-8 bg-gray-50">
         <div className="max-w-sm mx-auto">
           <h3 className="text-xl font-bold text-center mb-6">
             Why Choose FixConnect?
           </h3>
-          <div className="space-y-4">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <Shield className="h-6 w-6 text-success mt-1" />
-                  <div>
-                    <h4 className="font-semibold">Verified Professionals</h4>
-                    <p className="text-sm text-gray-600">
-                      All maintenance companies are licensed and verified
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <Clock className="h-6 w-6 text-accent mt-1" />
-                  <div>
-                    <h4 className="font-semibold">Fast Response</h4>
-                    <p className="text-sm text-gray-600">
-                      Get quotes within hours, not days
-                    </p>
-                  </div>
+          {/* Homeowner Benefits */}
+          <div className="mb-8">
+            <div className="flex items-center space-x-2 mb-4">
+              <Home className="h-5 w-5 text-blue-600" />
+              <h4 className="font-semibold text-blue-900">For Homeowners</h4>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              <div className="flex items-start space-x-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Verified Professionals</p>
+                  <p className="text-xs text-gray-600">Licensed & certified companies only</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="flex items-start space-x-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Fast Response</p>
+                  <p className="text-xs text-gray-600">Get multiple quotes within hours</p>
+                </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Quality Guaranteed</p>
+                  <p className="text-xs text-gray-600">Rated by real customers</p>
+                </div>
+              </div>
+            </div>
+          </div>
 
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <Star className="h-6 w-6 text-accent mt-1" />
-                  <div>
-                    <h4 className="font-semibold">Quality Guaranteed</h4>
-                    <p className="text-sm text-gray-600">
-                      Rated by real customers, quality assured
-                    </p>
-                  </div>
+          {/* Company Benefits */}
+          <div>
+            <div className="flex items-center space-x-2 mb-4">
+              <Building2 className="h-5 w-5 text-green-600" />
+              <h4 className="font-semibold text-green-900">For Service Companies</h4>
+            </div>
+            <div className="grid grid-cols-1 gap-3">
+              <div className="flex items-start space-x-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">More Customers</p>
+                  <p className="text-xs text-gray-600">Access to homeowners across UAE</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start space-x-3">
-                  <MapPin className="h-6 w-6 text-secondary mt-1" />
-                  <div>
-                    <h4 className="font-semibold">UAE-Wide Coverage</h4>
-                    <p className="text-sm text-gray-600">
-                      Serving all emirates with local expertise
-                    </p>
-                  </div>
+              </div>
+              <div className="flex items-start space-x-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Easy Management</p>
+                  <p className="text-xs text-gray-600">Simple quote and job tracking</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <div className="flex items-start space-x-3">
+                <CheckCircle className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <p className="text-sm font-medium">Grow Your Business</p>
+                  <p className="text-xs text-gray-600">Build reputation with reviews</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -169,16 +196,27 @@ export default function Landing() {
         <div className="max-w-sm mx-auto text-center">
           <h3 className="text-xl font-bold mb-3">Ready to Get Started?</h3>
           <p className="text-gray-600 mb-6">
-            Join thousands of satisfied homeowners who trust FixConnect
+            Join the UAE's fastest-growing maintenance network
           </p>
-          <Button
-            onClick={handleLogin}
-            size="lg"
-            className="w-full bg-success hover:bg-green-600"
-            data-testid="button-join-now"
-          >
-            Join Now - It's Free!
-          </Button>
+          <div className="space-y-3">
+            <Button
+              onClick={handleHomeownerLogin}
+              size="lg"
+              className="w-full bg-blue-600 hover:bg-blue-700"
+              data-testid="button-homeowner-signup"
+            >
+              Join as Homeowner - Free!
+            </Button>
+            <Button
+              onClick={handleCompanyLogin}
+              size="lg"
+              variant="outline"
+              className="w-full border-green-600 text-green-600 hover:bg-green-50"
+              data-testid="button-company-signup"
+            >
+              Register Your Company
+            </Button>
+          </div>
         </div>
       </div>
 

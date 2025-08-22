@@ -56,6 +56,7 @@ function updateUserSession(
 
 async function upsertUser(
   claims: any,
+  isCompanySignup: boolean = false,
 ) {
   await storage.upsertUser({
     id: claims["sub"],
@@ -63,6 +64,7 @@ async function upsertUser(
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
+    role: isCompanySignup ? 'company' : 'homeowner',
   });
 }
 
@@ -76,11 +78,15 @@ export async function setupAuth(app: Express) {
 
   const verify: VerifyFunction = async (
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
-    verified: passport.AuthenticateCallback
+    verified: passport.AuthenticateCallback,
+    req?: any
   ) => {
     const user = {};
     updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
+    
+    // Check if this is a company signup based on state parameter
+    const isCompanySignup = req?.query?.state === 'company_signup';
+    await upsertUser(tokens.claims(), isCompanySignup);
     verified(null, user);
   };
 
@@ -105,6 +111,14 @@ export async function setupAuth(app: Express) {
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
+    })(req, res, next);
+  });
+
+  app.get("/api/login/company", (req, res, next) => {
+    passport.authenticate(`replitauth:${req.hostname}`, {
+      prompt: "login consent",
+      scope: ["openid", "email", "profile", "offline_access"],
+      state: "company_signup", // Add state parameter to distinguish company signup
     })(req, res, next);
   });
 
