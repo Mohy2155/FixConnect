@@ -237,6 +237,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Company onboarding endpoint
+  app.post('/api/companies/onboarding', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Parse form data
+      const {
+        legalCompanyName,
+        website,
+        phone,
+        email,
+        serviceTypes,
+        serviceAreas,
+        description
+      } = req.body;
+
+      // Parse arrays from JSON strings
+      const parsedServiceTypes = typeof serviceTypes === 'string' ? JSON.parse(serviceTypes) : serviceTypes;
+      const parsedServiceAreas = typeof serviceAreas === 'string' ? JSON.parse(serviceAreas) : serviceAreas;
+
+      // Create company data
+      const companyData = {
+        name: legalCompanyName,
+        description,
+        phone,
+        email,
+        website: website || null,
+        licenseNumber: '', // Will be updated once license is processed
+        responseTime: '2-4 hours',
+        serviceAreas: parsedServiceAreas,
+        specialties: parsedServiceTypes,
+        userId,
+        isVerified: false, // Pending verification
+        rating: '0',
+        reviewCount: 0,
+      };
+      
+      const company = await storage.createCompany(companyData);
+      
+      // TODO: Process uploaded trade license file
+      // In a real implementation, you would:
+      // 1. Store the file securely (e.g., AWS S3, Google Cloud Storage)
+      // 2. Queue it for verification by admin staff
+      // 3. Extract license number from the document
+      
+      res.json({
+        success: true,
+        message: 'Company registration submitted for review',
+        companyId: company.id
+      });
+    } catch (error) {
+      console.error('Error submitting company onboarding:', error);
+      res.status(500).json({ message: 'Failed to submit company registration' });
+    }
+  });
+
   app.put('/api/companies/:companyId', isAuthenticated, async (req: any, res) => {
     try {
       const { companyId } = req.params;

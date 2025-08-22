@@ -310,14 +310,14 @@ export default function Home() {
                 Manage your business profile and view service requests
               </p>
               <div className="space-y-3">
-                <Button className="w-full" onClick={() => navigate('/profile')}>
-                  Complete Business Profile
+                <Button className="w-full" onClick={() => navigate('/company-onboarding')} data-testid="button-complete-registration">
+                  Complete Registration
                 </Button>
-                <Button variant="outline" className="w-full">
-                  View Available Jobs
+                <Button className="w-full" onClick={() => navigate('/company-dashboard')} data-testid="button-dashboard">
+                  Go to Dashboard
                 </Button>
-                <Button variant="outline" className="w-full">
-                  Manage Quotes
+                <Button variant="outline" className="w-full" onClick={() => navigate('/profile')} data-testid="button-manage-profile">
+                  Manage Profile
                 </Button>
               </div>
             </div>
