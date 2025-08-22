@@ -147,7 +147,11 @@ export default function Home() {
           <Button
             variant={userRole === 'homeowner' ? 'default' : 'outline'}
             size="sm"
-            className="flex-1"
+            className={`flex-1 transition-all duration-200 ${
+              userRole === 'homeowner' 
+                ? 'bg-black hover:bg-gray-800 text-white shadow-lg scale-105 font-semibold border-2 border-black' 
+                : 'text-gray-600 hover:text-gray-800 hover:border-gray-400 border-2 border-gray-300'
+            }`}
             onClick={() => handleRoleSwitch('homeowner')}
             data-testid="button-homeowner-role"
           >
@@ -156,7 +160,11 @@ export default function Home() {
           <Button
             variant={userRole === 'company' ? 'default' : 'outline'}
             size="sm"
-            className="flex-1"
+            className={`flex-1 transition-all duration-200 ${
+              userRole === 'company' 
+                ? 'bg-black hover:bg-gray-800 text-white shadow-lg scale-105 font-semibold border-2 border-black' 
+                : 'text-gray-600 hover:text-gray-800 hover:border-gray-400 border-2 border-gray-300'
+            }`}
             onClick={() => handleRoleSwitch('company')}
             data-testid="button-company-role"
           >
