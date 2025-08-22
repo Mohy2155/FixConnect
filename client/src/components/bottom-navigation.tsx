@@ -19,35 +19,47 @@ export function BottomNavigation({ unreadCount = 0 }: BottomNavigationProps) {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 w-full max-w-sm mx-auto bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg z-navigation">
-      <div className="grid grid-cols-5 py-2">
-        {navItems.map(({ path, icon: Icon, label, badge }) => {
-          const isActive = location === path;
-          
-          return (
-            <Link key={path} href={path}>
-              <button 
-                className={cn(
-                  "relative flex flex-col items-center justify-center py-2 transition-colors",
-                  isActive ? "text-primary" : "text-gray-400 hover:text-gray-600"
-                )}
-                data-testid={`nav-${label.toLowerCase().replace(' ', '-')}`}
-              >
-                <Icon className="h-5 w-5 mb-1" />
-                <span className="text-xs font-medium">{label}</span>
-                
-                {badge && badge > 0 && (
-                  <div className="absolute -top-1 -right-1 w-4 h-4 bg-error rounded-full flex items-center justify-center">
-                    <span className="text-white text-xs font-bold">
-                      {badge > 99 ? '99+' : badge}
-                    </span>
-                  </div>
-                )}
-              </button>
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+    <div className="fixed bottom-4 left-4 right-4 flex justify-center z-navigation">
+      <nav className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 px-6 py-3 max-w-sm w-full">
+        <div className="grid grid-cols-5 gap-1">
+          {navItems.map(({ path, icon: Icon, label, badge }) => {
+            const isActive = location === path;
+            
+            return (
+              <Link key={path} href={path}>
+                <button 
+                  className={cn(
+                    "relative flex flex-col items-center justify-center py-3 px-2 rounded-xl transition-all duration-200 ease-in-out",
+                    isActive 
+                      ? "text-primary bg-primary/10 dark:bg-primary/20 scale-105" 
+                      : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  )}
+                  data-testid={`nav-${label.toLowerCase().replace(' ', '-')}`}
+                >
+                  <Icon className={cn(
+                    "h-5 w-5 mb-1 transition-transform duration-200",
+                    isActive ? "scale-110" : "scale-100"
+                  )} />
+                  <span className={cn(
+                    "text-xs font-medium transition-all duration-200",
+                    isActive ? "font-semibold" : "font-normal"
+                  )}>
+                    {label}
+                  </span>
+                  
+                  {badge && badge > 0 && (
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-error rounded-full flex items-center justify-center shadow-md">
+                      <span className="text-white text-xs font-bold leading-none">
+                        {badge > 99 ? '99+' : badge}
+                      </span>
+                    </div>
+                  )}
+                </button>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+    </div>
   );
 }
