@@ -1,0 +1,138 @@
+{
+  "app": {
+    "name": "FixConnect",
+    "tagline": "UAE's Premier Home Maintenance Platform"
+  },
+  "common": {
+    "home": "Home",
+    "search": "Search",
+    "jobs": "My Jobs",
+    "messages": "Messages",
+    "profile": "Profile",
+    "loading": "Loading...",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "next": "Next",
+    "previous": "Previous",
+    "back": "Back",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view": "View",
+    "and_more": "And More!"
+  },
+  "landing": {
+    "hero_title": "Choose Your Path",
+    "hero_subtitle": "Whether you need maintenance services or provide them, FixConnect connects the UAE maintenance community",
+    "homeowner_card": {
+      "title": "I'm a Homeowner",
+      "subtitle": "Find trusted maintenance professionals"
+    },
+    "company_card": {
+      "title": "I'm a Service Company",
+      "subtitle": "Grow your business with new customers"
+    },
+    "why_choose": "Why Choose FixConnect?",
+    "homeowner_benefits": {
+      "title": "For Homeowners",
+      "verified": "Verified Professionals",
+      "verified_desc": "Licensed & certified companies only",
+      "fast": "Fast Response",
+      "fast_desc": "Get multiple quotes within hours",
+      "quality": "Quality Guaranteed",
+      "quality_desc": "Rated by real customers"
+    },
+    "company_benefits": {
+      "title": "For Service Companies",
+      "customers": "More Customers",
+      "customers_desc": "Access to homeowners across UAE",
+      "management": "Easy Management",
+      "management_desc": "Simple quote and job tracking",
+      "growth": "Grow Your Business",
+      "growth_desc": "Build reputation with reviews"
+    },
+    "services": {
+      "title": "Our Services",
+      "plumbing": "Plumbing",
+      "plumbing_desc": "Pipes, faucets, drains",
+      "electrical": "Electrical",
+      "electrical_desc": "Wiring, outlets, lights",
+      "ac_cooling": "AC & Cooling",
+      "ac_cooling_desc": "Air conditioning, fans",
+      "appliances": "Appliances",
+      "appliances_desc": "TV, washing machine",
+      "more_desc": "Painting, cleaning, carpentry, and many other services"
+    },
+    "cta": {
+      "title": "Ready to Get Started?",
+      "subtitle": "Join the UAE's fastest-growing maintenance network",
+      "homeowner_button": "Join as Homeowner - Free!",
+      "company_button": "Register Your Company"
+    }
+  },
+  "home": {
+    "welcome": "Welcome back, {{name}}!",
+    "welcome_subtitle": "Need maintenance? Connect with certified professionals in UAE",
+    "active_jobs": "Active Jobs",
+    "total_spent": "Total Spent",
+    "create_request": "Create Custom Request",
+    "recent_jobs": "Recent Jobs",
+    "view_all": "View All",
+    "no_recent_jobs": "No recent jobs",
+    "create_first_request": "Create Your First Request",
+    "company_welcome": "Welcome, Business Partner!",
+    "company_subtitle": "Ready to grow your business? Connect with customers who need your services.",
+    "complete_registration": "Complete Registration",
+    "go_to_dashboard": "Go to Dashboard",
+    "manage_profile": "Manage Profile"
+  },
+  "onboarding": {
+    "title": "Company Registration",
+    "step_info": "Company Info",
+    "step_services": "Services",
+    "step_description": "Description",
+    "legal_name": "Legal Company Name",
+    "legal_name_placeholder": "Enter your legal company name",
+    "phone": "Contact Phone",
+    "phone_placeholder": "+971 50 123 4567",
+    "email": "Business Email",
+    "email_placeholder": "info@company.com",
+    "website": "Website (Optional)",
+    "website_placeholder": "https://www.company.com",
+    "trade_license": "Trade License",
+    "upload_license": "Upload your trade license",
+    "file_format": "PDF, JPEG, or PNG (max 5MB)",
+    "services_provided": "Services Provided",
+    "areas_served": "Areas Served",
+    "about_company": "About Your Company",
+    "description_placeholder": "Describe your company, experience, certifications, and what makes you stand out. This will be visible to potential customers.",
+    "review_process": "Review Process",
+    "review_items": [
+      "Your application will be reviewed within 2-3 business days",
+      "We will verify your trade license and company information",
+      "Once approved, you can start receiving service requests",
+      "You'll receive an email notification upon approval"
+    ],
+    "submit_application": "Submit Application",
+    "submitting": "Submitting..."
+  },
+  "services": {
+    "plumbing": "Plumbing",
+    "electrical": "Electrical",
+    "ac_cooling": "AC & Cooling",
+    "appliances": "Appliances",
+    "cleaning": "Cleaning",
+    "painting": "Painting",
+    "carpentry": "Carpentry",
+    "landscaping": "Landscaping"
+  },
+  "emirates": {
+    "dubai": "Dubai",
+    "abu_dhabi": "Abu Dhabi", 
+    "sharjah": "Sharjah",
+    "ajman": "Ajman",
+    "fujairah": "Fujairah",
+    "ras_al_khaimah": "Ras Al Khaimah",
+    "umm_al_quwain": "Umm Al Quwain"
+  }
+}

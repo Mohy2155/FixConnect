@@ -1,0 +1,138 @@
+{
+  "app": {
+    "name": "فيكس كونيكت",
+    "tagline": "منصة الإمارات الرائدة لصيانة المنازل"
+  },
+  "common": {
+    "home": "الرئيسية",
+    "search": "البحث",
+    "jobs": "أعمالي",
+    "messages": "الرسائل",
+    "profile": "الملف الشخصي",
+    "loading": "جارٍ التحميل...",
+    "submit": "إرسال",
+    "cancel": "إلغاء",
+    "next": "التالي",
+    "previous": "السابق",
+    "back": "رجوع",
+    "save": "حفظ",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "view": "عرض",
+    "and_more": "والمزيد!"
+  },
+  "landing": {
+    "hero_title": "اختر مسارك",
+    "hero_subtitle": "سواء كنت تحتاج خدمات الصيانة أو تقدمها، فيكس كونيكت يربط مجتمع الصيانة في دولة الإمارات",
+    "homeowner_card": {
+      "title": "أنا مالك منزل",
+      "subtitle": "اعثر على خبراء صيانة موثوقين"
+    },
+    "company_card": {
+      "title": "أنا شركة خدمات",
+      "subtitle": "نمّ أعمالك مع عملاء جدد"
+    },
+    "why_choose": "لماذا تختار فيكس كونيكت؟",
+    "homeowner_benefits": {
+      "title": "لأصحاب المنازل",
+      "verified": "خبراء معتمدون",
+      "verified_desc": "شركات مرخصة ومعتمدة فقط",
+      "fast": "استجابة سريعة",
+      "fast_desc": "احصل على عروض أسعار متعددة خلال ساعات",
+      "quality": "جودة مضمونة",
+      "quality_desc": "مُقيم من قبل عملاء حقيقيين"
+    },
+    "company_benefits": {
+      "title": "لشركات الخدمات",
+      "customers": "المزيد من العملاء",
+      "customers_desc": "الوصول إلى أصحاب المنازل في جميع أنحاء الإمارات",
+      "management": "إدارة سهلة",
+      "management_desc": "تتبع بسيط للعروض والأعمال",
+      "growth": "نمّ أعمالك",
+      "growth_desc": "اكتسب سمعة من خلال التقييمات"
+    },
+    "services": {
+      "title": "خدماتنا",
+      "plumbing": "السباكة",
+      "plumbing_desc": "الأنابيب، الحنفيات، المصارف",
+      "electrical": "الكهرباء",
+      "electrical_desc": "الأسلاك، المقابس، الإضاءة",
+      "ac_cooling": "التكييف والتبريد",
+      "ac_cooling_desc": "تكييف الهواء، المراوح",
+      "appliances": "الأجهزة",
+      "appliances_desc": "التلفزيون، الغسالة",
+      "more_desc": "الطلاء، التنظيف، النجارة، والعديد من الخدمات الأخرى"
+    },
+    "cta": {
+      "title": "هل أنت مستعد للبدء؟",
+      "subtitle": "انضم إلى شبكة الصيانة الأسرع نمواً في الإمارات",
+      "homeowner_button": "انضم كمالك منزل - مجاناً!",
+      "company_button": "سجل شركتك"
+    }
+  },
+  "home": {
+    "welcome": "مرحباً بعودتك، {{name}}!",
+    "welcome_subtitle": "تحتاج صيانة؟ تواصل مع خبراء معتمدين في الإمارات",
+    "active_jobs": "الأعمال النشطة",
+    "total_spent": "إجمالي المبلغ المنفق",
+    "create_request": "إنشاء طلب مخصص",
+    "recent_jobs": "الأعمال الحديثة",
+    "view_all": "عرض الكل",
+    "no_recent_jobs": "لا توجد أعمال حديثة",
+    "create_first_request": "إنشاء طلبك الأول",
+    "company_welcome": "أهلاً، شريك الأعمال!",
+    "company_subtitle": "مستعد لتنمية أعمالك؟ تواصل مع العملاء الذين يحتاجون خدماتك.",
+    "complete_registration": "إكمال التسجيل",
+    "go_to_dashboard": "الذهاب إلى لوحة التحكم",
+    "manage_profile": "إدارة الملف الشخصي"
+  },
+  "onboarding": {
+    "title": "تسجيل الشركة",
+    "step_info": "معلومات الشركة",
+    "step_services": "الخدمات",
+    "step_description": "الوصف",
+    "legal_name": "الاسم القانوني للشركة",
+    "legal_name_placeholder": "أدخل الاسم القانوني لشركتك",
+    "phone": "هاتف الاتصال",
+    "phone_placeholder": "+971 50 123 4567",
+    "email": "بريد الأعمال الإلكتروني",
+    "email_placeholder": "info@company.com",
+    "website": "الموقع الإلكتروني (اختياري)",
+    "website_placeholder": "https://www.company.com",
+    "trade_license": "الرخصة التجارية",
+    "upload_license": "ارفع رخصتك التجارية",
+    "file_format": "PDF أو JPEG أو PNG (حد أقصى 5 ميجابايت)",
+    "services_provided": "الخدمات المقدمة",
+    "areas_served": "المناطق المخدومة",
+    "about_company": "عن شركتك",
+    "description_placeholder": "اوصف شركتك وخبرتك وشهاداتك وما يميزك. ستكون هذه المعلومات مرئية للعملاء المحتملين.",
+    "review_process": "عملية المراجعة",
+    "review_items": [
+      "ستتم مراجعة طلبك خلال 2-3 أيام عمل",
+      "سنتحقق من رخصتك التجارية ومعلومات الشركة",
+      "بمجرد الموافقة، يمكنك البدء في تلقي طلبات الخدمة",
+      "ستتلقى إشعاراً بالبريد الإلكتروني عند الموافقة"
+    ],
+    "submit_application": "إرسال الطلب",
+    "submitting": "جارٍ الإرسال..."
+  },
+  "services": {
+    "plumbing": "السباكة",
+    "electrical": "الكهرباء",
+    "ac_cooling": "التكييف والتبريد",
+    "appliances": "الأجهزة",
+    "cleaning": "التنظيف",
+    "painting": "الطلاء",
+    "carpentry": "النجارة",
+    "landscaping": "تنسيق الحدائق"
+  },
+  "emirates": {
+    "dubai": "دبي",
+    "abu_dhabi": "أبوظبي",
+    "sharjah": "الشارقة",
+    "ajman": "عجمان",
+    "fujairah": "الفجيرة",
+    "ras_al_khaimah": "رأس الخيمة",
+    "umm_al_quwain": "أم القيوين"
+  }
+}
