@@ -19,9 +19,9 @@ export function BottomNavigation({ unreadCount = 0 }: BottomNavigationProps) {
   ];
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 flex justify-center z-navigation">
-      <nav className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 px-6 py-3 max-w-sm w-full">
-        <div className="grid grid-cols-5 gap-1">
+    <div className="fixed bottom-2 left-2 right-2 flex justify-center z-navigation">
+      <nav className="bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 px-3 py-2 max-w-sm w-full">
+        <div className="grid grid-cols-5 gap-0">
           {navItems.map(({ path, icon: Icon, label, badge }) => {
             const isActive = location === path;
             
@@ -29,7 +29,7 @@ export function BottomNavigation({ unreadCount = 0 }: BottomNavigationProps) {
               <Link key={path} href={path}>
                 <button 
                   className={cn(
-                    "relative flex flex-col items-center justify-center py-3 px-2 rounded-xl transition-all duration-200 ease-in-out",
+                    "relative flex flex-col items-center justify-center py-2 px-1 rounded-lg transition-all duration-200 ease-in-out",
                     isActive 
                       ? "text-primary bg-primary/10 dark:bg-primary/20 scale-105" 
                       : "text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
@@ -37,7 +37,7 @@ export function BottomNavigation({ unreadCount = 0 }: BottomNavigationProps) {
                   data-testid={`nav-${label.toLowerCase().replace(' ', '-')}`}
                 >
                   <Icon className={cn(
-                    "h-5 w-5 mb-1 transition-transform duration-200",
+                    "h-4 w-4 mb-1 transition-transform duration-200",
                     isActive ? "scale-110" : "scale-100"
                   )} />
                   <span className={cn(
@@ -48,9 +48,9 @@ export function BottomNavigation({ unreadCount = 0 }: BottomNavigationProps) {
                   </span>
                   
                   {badge && badge > 0 && (
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-error rounded-full flex items-center justify-center shadow-md">
+                    <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-error rounded-full flex items-center justify-center shadow-md">
                       <span className="text-white text-xs font-bold leading-none">
-                        {badge > 99 ? '99+' : badge}
+                        {badge > 9 ? '9+' : badge}
                       </span>
                     </div>
                   )}
