@@ -170,7 +170,7 @@ export default function JobDetails() {
       </header>
 
       {/* Main Content */}
-      <main className="pb-20">
+      <main className="pb-16">
         {/* Job Info */}
         <div className="p-4">
           <Card>

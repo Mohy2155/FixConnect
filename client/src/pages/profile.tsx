@@ -266,7 +266,7 @@ export default function Profile() {
       </div>
 
       {/* Main Content */}
-      <main className="p-4 pb-20 space-y-4">
+      <main className="p-4 pb-16 space-y-4">
         {activeTab === 'profile' ? (
           /* Personal Profile */
           <>
@@ -652,6 +652,7 @@ export default function Profile() {
                                 placeholder="Describe your company and services"
                                 className="h-20 resize-none"
                                 {...field}
+                                value={field.value || ''}
                                 data-testid="textarea-company-description"
                               />
                             </FormControl>
@@ -670,6 +671,7 @@ export default function Profile() {
                               <Input 
                                 placeholder="Business license number" 
                                 {...field} 
+                                value={field.value || ''}
                                 data-testid="input-license-number"
                               />
                             </FormControl>
@@ -684,7 +686,7 @@ export default function Profile() {
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Typical Response Time</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <Select onValueChange={field.onChange} defaultValue={field.value || '2-4 hours'}>
                               <FormControl>
                                 <SelectTrigger data-testid="select-response-time">
                                   <SelectValue />

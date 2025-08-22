@@ -279,7 +279,7 @@ export default function Search() {
       </div>
 
       {/* Main Content */}
-      <main className="p-4 pb-20">
+      <main className="p-4 pb-16">
         {/* Service Categories */}
         <div className="mb-6">
           <h3 className="text-lg font-medium text-gray-800 mb-3">Browse by Category</h3>

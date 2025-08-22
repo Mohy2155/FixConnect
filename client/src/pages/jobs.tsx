@@ -143,7 +143,7 @@ export default function Jobs() {
       </div>
 
       {/* Main Content */}
-      <main className="p-4 pb-20">
+      <main className="p-4 pb-16">
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
