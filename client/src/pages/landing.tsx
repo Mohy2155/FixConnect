@@ -20,7 +20,7 @@ export default function Landing() {
                 <Wrench className="h-8 w-8" />
                 <h1 className="text-2xl font-bold">FixConnect</h1>
               </div>
-              <p className="text-blue-100 text-lg text-center">UAE's Premier Home Maintenance Platform</p>
+              <p className="text-white text-lg text-center font-medium">UAE's Premier Home Maintenance Platform</p>
             </div>
       </header>
 
@@ -185,6 +185,14 @@ export default function Landing() {
                 <div className="text-3xl mb-2">📺</div>
                 <h4 className="font-semibold mb-1">Appliances</h4>
                 <p className="text-xs text-gray-600">TV, washing machine</p>
+              </CardContent>
+            </Card>
+
+            <Card className="col-span-2">
+              <CardContent className="p-4 text-center">
+                <div className="text-3xl mb-2">✨</div>
+                <h4 className="font-semibold mb-1">And More!</h4>
+                <p className="text-xs text-gray-600">Painting, cleaning, carpentry, and many other services</p>
               </CardContent>
             </Card>
           </div>
