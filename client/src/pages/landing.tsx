@@ -1,8 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wrench, Shield, Clock, Star, MapPin, Phone, Home, Building2, Users, Zap, CheckCircle } from "lucide-react";
+import { useTranslation } from 'react-i18next';
+import { LanguageSelector } from '@/components/language-selector';
 
 export default function Landing() {
+  const { t } = useTranslation();
+  
   const handleHomeownerLogin = () => {
     window.location.href = "/api/login";
   };
@@ -16,11 +20,14 @@ export default function Landing() {
           {/* Header */}
           <header className="bg-primary text-white px-4 py-6">
             <div className="max-w-sm mx-auto">
-              <div className="flex items-center justify-center space-x-3 mb-4">
-                <Wrench className="h-8 w-8" />
-                <h1 className="text-2xl font-bold">FixConnect</h1>
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center space-x-3 rtl:space-x-reverse">
+                  <Wrench className="h-8 w-8" />
+                  <h1 className="text-2xl font-bold">{t('app.name')}</h1>
+                </div>
+                <LanguageSelector variant="button" size="sm" />
               </div>
-              <p className="text-white text-lg text-center font-medium">UAE's Premier Home Maintenance Platform</p>
+              <p className="text-white text-lg text-center font-medium">{t('app.tagline')}</p>
             </div>
       </header>
 
@@ -35,10 +42,10 @@ export default function Landing() {
             />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-3">
-            Choose Your Path
+            {t('landing.hero_title')}
           </h2>
           <p className="text-gray-600 mb-8">
-            Whether you need maintenance services or provide them, FixConnect connects the UAE maintenance community
+            {t('landing.hero_subtitle')}
           </p>
 
           {/* User Type Selection */}
@@ -49,9 +56,9 @@ export default function Landing() {
                   <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
                     <Home className="h-6 w-6 text-blue-600" />
                   </div>
-                  <div className="flex-1 text-left">
-                    <h3 className="font-semibold text-gray-900">I'm a Homeowner</h3>
-                    <p className="text-sm text-gray-600">Find trusted maintenance professionals</p>
+                  <div className="flex-1 text-left rtl:text-right">
+                    <h3 className="font-semibold text-gray-900">{t('landing.homeowner_card.title')}</h3>
+                    <p className="text-sm text-gray-600">{t('landing.homeowner_card.subtitle')}</p>
                   </div>
                   <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-lg">→</span>
@@ -66,9 +73,9 @@ export default function Landing() {
                   <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
                     <Building2 className="h-6 w-6 text-green-600" />
                   </div>
-                  <div className="flex-1 text-left">
-                    <h3 className="font-semibold text-gray-900">I'm a Service Company</h3>
-                    <p className="text-sm text-gray-600">Grow your business with new customers</p>
+                  <div className="flex-1 text-left rtl:text-right">
+                    <h3 className="font-semibold text-gray-900">{t('landing.company_card.title')}</h3>
+                    <p className="text-sm text-gray-600">{t('landing.company_card.subtitle')}</p>
                   </div>
                   <div className="w-8 h-8 bg-green-600 rounded-full flex items-center justify-center">
                     <span className="text-white text-lg">→</span>
@@ -84,14 +91,14 @@ export default function Landing() {
       <div className="px-4 py-8 bg-gray-50">
         <div className="max-w-sm mx-auto">
           <h3 className="text-xl font-bold text-center mb-6">
-            Why Choose FixConnect?
+            {t('landing.why_choose')}
           </h3>
 
           {/* Homeowner Benefits */}
           <div className="mb-8">
-            <div className="flex items-center space-x-2 mb-4">
+            <div className="flex items-center space-x-2 rtl:space-x-reverse mb-4">
               <Home className="h-5 w-5 text-blue-600" />
-              <h4 className="font-semibold text-blue-900">For Homeowners</h4>
+              <h4 className="font-semibold text-blue-900">{t('landing.homeowner_benefits.title')}</h4>
             </div>
             <div className="grid grid-cols-1 gap-3">
               <div className="flex items-start space-x-3">
