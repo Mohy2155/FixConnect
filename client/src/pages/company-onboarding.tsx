@@ -563,6 +563,8 @@ export default function CompanyOnboarding() {
           </form>
         </Form>
       </main>
+
+      <BottomNavigation />
     </div>
   );
 }

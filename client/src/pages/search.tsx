@@ -101,13 +101,16 @@ export default function Search() {
     navigate('/');
   };
 
-  const handleCategorySelect = (category: any) => {
-    setSelectedCategory(category.id);
+  const handleContactCompany = (companyId: string) => {
+    navigate(`/messages?companyId=${companyId}`);
   };
 
   const handleRequestQuote = (companyId: string) => {
-    // Navigate to service request with selected company
     navigate(`/service-request?companyId=${companyId}`);
+  };
+
+  const handleCategorySelect = (category: any) => {
+    setSelectedCategory(category.id);
   };
 
   const handleSearch = () => {
@@ -279,7 +282,7 @@ export default function Search() {
       </div>
 
       {/* Main Content */}
-      <main className="p-4 pb-16">
+      <main className="p-4 pb-20">
         {/* Service Categories */}
         <div className="mb-6">
           <h3 className="text-lg font-medium text-gray-800 mb-3">Browse by Category</h3>

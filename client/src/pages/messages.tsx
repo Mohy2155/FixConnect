@@ -227,7 +227,7 @@ export default function Messages() {
       </header>
 
       {/* Main Content */}
-      <main className="pb-16 h-screen overflow-hidden flex flex-col">
+      <main className="pb-20 h-screen overflow-hidden flex flex-col">
         {!selectedThread ? (
           /* Message Threads List */
           <div className="p-4 flex-1 overflow-y-auto">

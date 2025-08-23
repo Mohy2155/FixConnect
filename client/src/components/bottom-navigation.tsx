@@ -19,8 +19,8 @@ export function BottomNavigation({ unreadCount = 0 }: BottomNavigationProps) {
   ];
 
   return (
-    <div className="fixed bottom-2 left-2 right-2 flex justify-center z-navigation">
-      <nav className="bg-white dark:bg-gray-900 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 px-3 py-2 max-w-sm w-full">
+    <div className="fixed bottom-0 left-0 right-0 flex justify-center z-navigation bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95">
+      <nav className="px-3 py-2 max-w-sm w-full">
         <div className="grid grid-cols-5 gap-0">
           {navItems.map(({ path, icon: Icon, label, badge }) => {
             const isActive = location === path;

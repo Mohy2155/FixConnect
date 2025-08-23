@@ -266,7 +266,7 @@ export default function Profile() {
       </div>
 
       {/* Main Content */}
-      <main className="p-4 pb-16 space-y-4">
+      <main className="p-4 pb-20 space-y-4">
         {activeTab === 'profile' ? (
           /* Personal Profile */
           <>

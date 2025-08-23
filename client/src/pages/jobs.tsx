@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { JobCard } from "@/components/job-card";
 import { ArrowLeft, Filter, Search, Plus } from "lucide-react";
@@ -17,6 +18,9 @@ export default function Jobs() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'completed'>('all');
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<string>('all_time');
 
   // Fetch user's service requests
   const { data: serviceRequests = [], isLoading } = useQuery<ServiceRequest[]>({
@@ -43,15 +47,26 @@ export default function Jobs() {
     navigate('/service-request');
   };
 
-  // Filter jobs based on active filter
+  // Filter jobs based on active filter and advanced filters
   const filteredJobs = serviceRequests.filter(job => {
-    if (activeFilter === 'active') {
-      return job.status && ['pending', 'quoted', 'approved', 'in_progress'].includes(job.status);
+    // Basic filter
+    if (activeFilter === 'active' && (!job.status || !['pending', 'quoted', 'approved', 'in_progress'].includes(job.status))) return false;
+    if (activeFilter === 'completed' && job.status !== 'completed') return false;
+    
+    // Advanced filters
+    if (statusFilter !== 'all' && job.status !== statusFilter) return false;
+    
+    if (dateRange !== 'all_time' && job.createdAt) {
+      const jobDate = new Date(job.createdAt);
+      const now = new Date();
+      const diffDays = Math.floor((now.getTime() - jobDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (dateRange === 'last_week' && diffDays > 7) return false;
+      if (dateRange === 'last_month' && diffDays > 30) return false;
+      if (dateRange === 'last_3_months' && diffDays > 90) return false;
     }
-    if (activeFilter === 'completed') {
-      return job.status === 'completed';
-    }
-    return true; // 'all'
+    
+    return true;
   });
 
   // Mock enhanced job data - in real app this would come from joined queries
@@ -100,7 +115,7 @@ export default function Jobs() {
               variant="ghost"
               size="sm"
               className="p-2 hover:bg-blue-600 text-white"
-              onClick={() => toast({ title: "Filters", description: "Advanced filters coming soon!" })}
+              onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
               data-testid="button-filter"
             >
               <Filter className="h-4 w-4" />
@@ -142,8 +157,61 @@ export default function Jobs() {
         </div>
       </div>
 
+      {/* Advanced Filters */}
+      {showAdvancedFilter && (
+        <div className="p-4 bg-gray-50 border-b border-gray-100">
+          <h4 className="text-sm font-medium text-gray-700 mb-3">Advanced Filters</h4>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">Status</label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="quoted">Quoted</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                  <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-600 mb-1 block">Date Range</label>
+              <Select value={dateRange} onValueChange={setDateRange}>
+                <SelectTrigger className="h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all_time">All Time</SelectItem>
+                  <SelectItem value="last_week">Last Week</SelectItem>
+                  <SelectItem value="last_month">Last Month</SelectItem>
+                  <SelectItem value="last_3_months">Last 3 Months</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="flex justify-end mt-3">
+            <Button 
+              size="sm" 
+              variant="outline" 
+              onClick={() => {
+                setStatusFilter('all');
+                setDateRange('all_time');
+              }}
+              className="text-xs"
+            >
+              Clear Filters
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Main Content */}
-      <main className="p-4 pb-16">
+      <main className="p-4 pb-20">
         {isLoading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (

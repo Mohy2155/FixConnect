@@ -174,7 +174,7 @@ export default function Home() {
       </div>
 
       {/* Main Content */}
-      <main className="pb-16">
+      <main className="pb-20">
         {userRole === 'homeowner' ? (
           <>
             {/* Welcome Section */}
@@ -327,7 +327,7 @@ export default function Home() {
 
       {/* Floating Action Button */}
       <Button
-        className="fixed bottom-16 right-4 w-12 h-12 rounded-full bg-accent hover:bg-orange-600 shadow-lg"
+        className="fixed bottom-24 right-4 w-12 h-12 rounded-full bg-accent hover:bg-orange-600 shadow-lg"
         onClick={handleCreateRequest}
         data-testid="button-floating-request"
       >
