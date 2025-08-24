@@ -12,7 +12,7 @@ export default function Landing() {
   };
 
   const handleCompanyLogin = () => {
-    window.location.href = "/api/login/company";
+    window.location.href = "/company-register";
   };
 
   return (

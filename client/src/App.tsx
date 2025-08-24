@@ -17,6 +17,7 @@ import Search from "@/pages/search";
 import Profile from "@/pages/profile";
 import CompanyDashboard from "@/pages/company-dashboard";
 import CompanyOnboarding from "@/pages/company-onboarding";
+import CompanyRegister from "@/pages/company-register";
 import CompanyProfile from "@/pages/company-profile";
 
 function Router() {
@@ -25,7 +26,10 @@ function Router() {
   return (
     <Switch>
       {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
+        <>
+          <Route path="/" component={Landing} />
+          <Route path="/company-register" component={CompanyRegister} />
+        </>
       ) : (
         <>
           <Route path="/" component={Home} />
@@ -35,6 +39,7 @@ function Router() {
           <Route path="/jobs/:id" component={JobDetails} />
           <Route path="/messages" component={Messages} />
           <Route path="/search" component={Search} />
+          <Route path="/company-register" component={CompanyRegister} />
           <Route path="/company-dashboard" component={CompanyDashboard} />
           <Route path="/company-onboarding" component={CompanyOnboarding} />
           <Route path="/companies/:companyId" component={CompanyProfile} />

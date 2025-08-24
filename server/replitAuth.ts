@@ -84,9 +84,9 @@ export async function setupAuth(app: Express) {
     const user = {};
     updateUserSession(user, tokens);
     
-    // Check if this is a company signup based on state parameter
-    const isCompanySignup = req?.query?.state === 'company_signup';
-    await upsertUser(tokens.claims(), isCompanySignup);
+    // Get target role from session - default to homeowner for regular login
+    const targetRole = req?.session?.targetRole || 'homeowner';
+    await upsertUser(tokens.claims(), targetRole === 'company');
     verified(null, user);
   };
 
@@ -107,26 +107,59 @@ export async function setupAuth(app: Express) {
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
-  app.get("/api/login", (req, res, next) => {
+  app.get("/api/login", (req: any, res, next) => {
+    // Store intended role in session
+    req.session.targetRole = 'homeowner';
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
 
-  app.get("/api/login/company", (req, res, next) => {
+  app.get("/api/login/company", (req: any, res, next) => {
+    // Store company role intent in session
+    req.session.targetRole = 'company';
     passport.authenticate(`replitauth:${req.hostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
-      state: "company_signup", // Add state parameter to distinguish company signup
     })(req, res, next);
   });
 
-  app.get("/api/callback", (req, res, next) => {
+  app.get("/api/callback", async (req: any, res, next) => {
     passport.authenticate(`replitauth:${req.hostname}`, {
-      successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
-    })(req, res, next);
+    })(req, res, async () => {
+      try {
+        // Get user ID from authenticated session
+        const userId = req.user?.claims?.sub;
+        if (!userId) {
+          return res.redirect('/api/login');
+        }
+
+        // Get target role from session
+        const targetRole = req.session?.targetRole || 'homeowner';
+        
+        // Update user role in database
+        const user = await storage.getUser(userId);
+        if (user) {
+          await storage.updateUser(userId, { role: targetRole });
+        }
+
+        // Redirect based on role
+        if (targetRole === 'company') {
+          // Company users must complete profile setup first
+          res.redirect('/company-onboarding');
+        } else {
+          res.redirect('/');
+        }
+
+        // Clear target role from session
+        delete req.session.targetRole;
+      } catch (error) {
+        console.error('Callback redirect error:', error);
+        res.redirect('/');
+      }
+    });
   });
 
   app.get("/api/logout", (req, res) => {
