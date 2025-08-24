@@ -497,6 +497,123 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect('/api/login');
   });
 
+  // Company profile endpoints
+  app.get('/api/company/profile', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'company') {
+        return res.status(401).json({ message: 'Company access required' });
+      }
+
+      const company = await storage.getCompanyByUserId(userId);
+      if (company) {
+        res.json(company);
+      } else {
+        res.status(404).json({ message: 'Company profile not found' });
+      }
+    } catch (error) {
+      console.error('Error fetching company profile:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/company/register', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const {
+        legalName,
+        licenseNumber,
+        description,
+        serviceAreas,
+        serviceTypes,
+        responseTime,
+        phone,
+        address
+      } = req.body;
+
+      // Parse JSON strings if needed
+      const parsedServiceAreas = typeof serviceAreas === 'string' ? JSON.parse(serviceAreas) : serviceAreas;
+      const parsedServiceTypes = typeof serviceTypes === 'string' ? JSON.parse(serviceTypes) : serviceTypes;
+
+      const companyData = {
+        userId,
+        name: legalName,
+        description,
+        licenseNumber,
+        isVerified: false, // Requires admin approval
+        serviceAreas: parsedServiceAreas,
+        specialties: parsedServiceTypes,
+        responseTime,
+        rating: '0',
+        reviewCount: 0
+      };
+
+      const company = await storage.createCompany(companyData);
+      
+      // Update user role to company
+      await storage.updateUser(userId, { role: 'company' });
+      
+      res.json(company);
+    } catch (error) {
+      console.error('Error registering company:', error);
+      res.status(500).json({ message: 'Failed to register company' });
+    }
+  });
+
+  app.get('/api/company/job-requests', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'company') {
+        return res.status(401).json({ message: 'Company access required' });
+      }
+
+      // Get company
+      const company = await storage.getCompanyByUserId(userId);
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+
+      // Get all service requests that match company's service types
+      const allRequests = await storage.getAllServiceRequests();
+      const matchingRequests = allRequests.filter(request => 
+        company.specialties?.some(specialty => 
+          request.categoryId === specialty || request.title?.toLowerCase().includes(specialty.toLowerCase())
+        )
+      );
+
+      res.json(matchingRequests);
+    } catch (error) {
+      console.error('Error fetching job requests:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/company/quotes', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'company') {
+        return res.status(401).json({ message: 'Company access required' });
+      }
+
+      const company = await storage.getCompanyByUserId(userId);
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+
+      const quotes = await storage.getQuotesByCompanyId(company.id);
+      res.json(quotes);
+    } catch (error) {
+      console.error('Error fetching quotes:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

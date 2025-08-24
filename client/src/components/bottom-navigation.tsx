@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
-import { Home, Search, List, MessageCircle, User } from "lucide-react";
+import { Home, Search, List, MessageCircle, User, Building } from "lucide-react";
 import { useLocation } from "wouter";
 import { Link } from "wouter";
+import { useAuth } from "@/hooks/useAuth";
 
 interface BottomNavigationProps {
   unreadCount?: number;
@@ -9,8 +10,15 @@ interface BottomNavigationProps {
 
 export function BottomNavigation({ unreadCount = 0 }: BottomNavigationProps) {
   const [location] = useLocation();
+  const { user } = useAuth();
   
-  const navItems = [
+  const navItems = user?.role === 'company' ? [
+    { path: "/company-dashboard", icon: Building, label: "Dashboard" },
+    { path: "/search", icon: Search, label: "Search" },
+    { path: "/jobs", icon: List, label: "Jobs" },
+    { path: "/messages", icon: MessageCircle, label: "Messages", badge: unreadCount },
+    { path: "/profile", icon: User, label: "Profile" },
+  ] : [
     { path: "/", icon: Home, label: "Home" },
     { path: "/search", icon: Search, label: "Search" },
     { path: "/jobs", icon: List, label: "My Jobs" },

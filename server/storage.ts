@@ -47,6 +47,7 @@ export interface IStorage {
   getCompaniesByServiceCategory(categoryId: string): Promise<Company[]>;
   createCompany(company: InsertCompany): Promise<Company>;
   updateCompany(id: string, updates: Partial<InsertCompany>): Promise<Company>;
+  updateUser(id: string, updates: Partial<User>): Promise<User>;
   
   // Service requests
   getServiceRequest(id: string): Promise<ServiceRequest | undefined>;
@@ -55,12 +56,14 @@ export interface IStorage {
   createServiceRequest(request: InsertServiceRequest): Promise<ServiceRequest>;
   updateServiceRequest(id: string, updates: Partial<InsertServiceRequest>): Promise<ServiceRequest>;
   
-  // Quotes
+  // Quotes  
   getQuote(id: string): Promise<Quote | undefined>;
   getQuotesByServiceRequest(serviceRequestId: string): Promise<Quote[]>;
   getQuotesByCompany(companyId: string): Promise<Quote[]>;
+  getQuotesByCompanyId(companyId: string): Promise<Quote[]>;
   createQuote(quote: InsertQuote): Promise<Quote>;
   updateQuote(id: string, updates: Partial<InsertQuote>): Promise<Quote>;
+  getAllServiceRequests(): Promise<ServiceRequest[]>;
   
   // Reviews
   getReviewsByCompany(companyId: string): Promise<Review[]>;
@@ -284,6 +287,31 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(messages.receiverId, userId), eq(messages.isRead, false)));
     
     return Number(result[0]?.count || 0);
+  }
+
+  // Additional methods for company functionality
+  async updateUser(id: string, updates: Partial<User>): Promise<User> {
+    const [result] = await db
+      .update(users)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return result;
+  }
+
+  async getQuotesByCompanyId(companyId: string): Promise<Quote[]> {
+    return await db
+      .select()
+      .from(quotes)
+      .where(eq(quotes.companyId, companyId))
+      .orderBy(desc(quotes.createdAt));
+  }
+
+  async getAllServiceRequests(): Promise<ServiceRequest[]> {
+    return await db
+      .select()
+      .from(serviceRequests)
+      .orderBy(desc(serviceRequests.createdAt));
   }
 }
 

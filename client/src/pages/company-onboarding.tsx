@@ -1,215 +1,166 @@
-import { useState, useRef } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { ArrowLeft, Upload, FileText, X } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { ArrowLeft, Upload, Building, FileText, MapPin, Wrench } from "lucide-react";
 import { useLocation } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
-import { z } from "zod";
 
-const companyOnboardingSchema = z.object({
-  legalCompanyName: z.string().min(2, "Legal company name is required"),
-  website: z.string().url("Please enter a valid website URL").optional().or(z.literal("")),
-  phone: z.string().min(8, "Phone number is required"),
-  email: z.string().email("Valid email address is required"),
-  serviceTypes: z.array(z.string()).min(1, "Please select at least one service type"),
-  serviceAreas: z.array(z.string()).min(1, "Please select at least one service area"),
-  description: z.string().min(50, "Please provide at least 50 characters describing your company"),
-});
-
-type CompanyOnboardingForm = z.infer<typeof companyOnboardingSchema>;
-
-const SERVICE_TYPES = [
-  { id: 'plumbing', name: 'Plumbing' },
-  { id: 'electrical', name: 'Electrical' },
-  { id: 'ac-cooling', name: 'AC & Cooling' },
-  { id: 'appliances', name: 'Appliances' },
-  { id: 'cleaning', name: 'Cleaning' },
-  { id: 'painting', name: 'Painting' },
-  { id: 'carpentry', name: 'Carpentry' },
-  { id: 'landscaping', name: 'Landscaping' },
+const uaeAreas = [
+  'Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah', 'Fujairah', 'Umm Al Quwain'
 ];
 
-const SERVICE_AREAS = [
-  'Dubai',
-  'Abu Dhabi',
-  'Sharjah',
-  'Ajman',
-  'Fujairah',
-  'Ras Al Khaimah',
-  'Umm Al Quwain',
+const serviceTypes = [
+  'Plumbing', 'Electrical', 'AC & Cooling', 'Appliances', 'Cleaning', 'Painting'
 ];
 
 export default function CompanyOnboarding() {
-  const { user, isLoading: authLoading } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [, navigate] = useLocation();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [tradeLicense, setTradeLicense] = useState<File | null>(null);
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 3;
-
-  const form = useForm<CompanyOnboardingForm>({
-    resolver: zodResolver(companyOnboardingSchema),
-    defaultValues: {
-      legalCompanyName: '',
-      website: '',
-      phone: '',
-      email: user?.email || '',
-      serviceTypes: [],
-      serviceAreas: [],
-      description: '',
-    },
+  const [step, setStep] = useState(1);
+  
+  // Form data
+  const [companyData, setCompanyData] = useState({
+    legalName: '',
+    licenseNumber: '',
+    description: '',
+    serviceAreas: [] as string[],
+    serviceTypes: [] as string[],
+    responseTime: '',
+    phone: '',
+    address: '',
   });
+  
+  const [licenseFile, setLicenseFile] = useState<File | null>(null);
 
-  const onboardingMutation = useMutation({
-    mutationFn: async (data: CompanyOnboardingForm) => {
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
+    } else {
+      navigate('/company-dashboard');
+    }
+  };
+
+  const handleNext = () => {
+    if (step < 3) {
+      setStep(step + 1);
+    }
+  };
+
+  const handleServiceAreaChange = (area: string, checked: boolean) => {
+    if (checked) {
+      setCompanyData(prev => ({
+        ...prev,
+        serviceAreas: [...prev.serviceAreas, area]
+      }));
+    } else {
+      setCompanyData(prev => ({
+        ...prev,
+        serviceAreas: prev.serviceAreas.filter(a => a !== area)
+      }));
+    }
+  };
+
+  const handleServiceTypeChange = (type: string, checked: boolean) => {
+    if (checked) {
+      setCompanyData(prev => ({
+        ...prev,
+        serviceTypes: [...prev.serviceTypes, type]
+      }));
+    } else {
+      setCompanyData(prev => ({
+        ...prev,
+        serviceTypes: prev.serviceTypes.filter(t => t !== type)
+      }));
+    }
+  };
+
+  const companyRegistrationMutation = useMutation({
+    mutationFn: async (data: typeof companyData & { licenseFile?: File }) => {
       const formData = new FormData();
+      formData.append('legalName', data.legalName);
+      formData.append('licenseNumber', data.licenseNumber);
+      formData.append('description', data.description);
+      formData.append('serviceAreas', JSON.stringify(data.serviceAreas));
+      formData.append('serviceTypes', JSON.stringify(data.serviceTypes));
+      formData.append('responseTime', data.responseTime);
+      formData.append('phone', data.phone);
+      formData.append('address', data.address);
       
-      // Add all form fields
-      Object.entries(data).forEach(([key, value]) => {
-        if (Array.isArray(value)) {
-          formData.append(key, JSON.stringify(value));
-        } else {
-          formData.append(key, value as string);
-        }
-      });
-
-      // Add trade license file
-      if (tradeLicense) {
-        formData.append('tradeLicense', tradeLicense);
+      if (data.licenseFile) {
+        formData.append('tradeLicense', data.licenseFile);
       }
-
-      return await apiRequest('POST', '/api/companies/onboarding', formData);
+      
+      return await apiRequest('POST', '/api/company/register', formData);
     },
     onSuccess: () => {
       toast({
-        title: "Application Submitted",
-        description: "Your company registration has been submitted for review. You'll be notified once approved.",
+        title: "Registration Submitted",
+        description: "Your company profile has been submitted for review. You'll be notified once approved.",
       });
-      queryClient.invalidateQueries({ queryKey: ['/api/companies'] });
-      navigate('/');
+      queryClient.invalidateQueries({ queryKey: ['/api/company/profile'] });
+      navigate('/company-dashboard');
     },
     onError: (error) => {
       if (isUnauthorizedError(error)) {
         toast({
           title: "Unauthorized",
-          description: "Please login again to continue",
+          description: "Please log in to continue.",
           variant: "destructive",
         });
         window.location.href = "/api/login";
         return;
       }
       toast({
-        title: "Error",
+        title: "Registration Failed",
         description: "Failed to submit company registration. Please try again.",
         variant: "destructive",
       });
     },
   });
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Validate file type and size
-      const validTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-      const maxSize = 5 * 1024 * 1024; // 5MB
-
-      if (!validTypes.includes(file.type)) {
-        toast({
-          title: "Invalid File Type",
-          description: "Please upload a PDF, JPEG, or PNG file",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      if (file.size > maxSize) {
-        toast({
-          title: "File Too Large",
-          description: "Please upload a file smaller than 5MB",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setTradeLicense(file);
-    }
-  };
-
-  const handleFileUploadClick = () => {
-    fileInputRef.current?.click();
-  };
-
-  const removeTradeLicense = () => {
-    setTradeLicense(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const onSubmit = (data: CompanyOnboardingForm) => {
-    if (!tradeLicense) {
+  const handleSubmit = () => {
+    if (!companyData.legalName || !companyData.licenseNumber || !licenseFile || 
+        companyData.serviceAreas.length === 0 || companyData.serviceTypes.length === 0) {
       toast({
-        title: "Trade License Required",
-        description: "Please upload your trade license document",
+        title: "Missing Information",
+        description: "Please fill in all required fields and upload your trade license.",
         variant: "destructive",
       });
       return;
     }
-    onboardingMutation.mutate(data);
+
+    companyRegistrationMutation.mutate({
+      ...companyData,
+      licenseFile
+    });
   };
 
-  const nextStep = async () => {
-    const fieldsToValidate = currentStep === 1 
-      ? ['legalCompanyName', 'phone', 'email', 'website']
-      : currentStep === 2 
-      ? ['serviceTypes', 'serviceAreas']
-      : ['description'];
-
-    const isValid = await form.trigger(fieldsToValidate as any);
-    if (isValid && (currentStep !== 1 || tradeLicense)) {
-      setCurrentStep(prev => Math.min(prev + 1, totalSteps));
-    } else if (currentStep === 1 && !tradeLicense) {
-      toast({
-        title: "Trade License Required",
-        description: "Please upload your trade license to continue",
-        variant: "destructive",
-      });
+  const canProceed = () => {
+    switch (step) {
+      case 1:
+        return companyData.legalName && companyData.licenseNumber && licenseFile;
+      case 2:
+        return companyData.serviceAreas.length > 0 && companyData.serviceTypes.length > 0;
+      case 3:
+        return companyData.description && companyData.responseTime;
+      default:
+        return false;
     }
   };
 
-  const prevStep = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
-  };
-
-  const handleBack = () => {
-    navigate('/');
-  };
-
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p>Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-sm mx-auto bg-surface min-h-screen relative">
+    <div className="max-w-sm mx-auto bg-surface min-h-screen">
       {/* Header */}
       <header className="bg-primary text-white px-4 py-3 shadow-lg">
         <div className="flex items-center space-x-3">
@@ -222,349 +173,242 @@ export default function CompanyOnboarding() {
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-medium">Company Registration</h1>
+          <div>
+            <h1 className="text-xl font-medium">Company Registration</h1>
+            <p className="text-sm opacity-90">Step {step} of 3</p>
+          </div>
         </div>
       </header>
 
-      {/* Progress Indicator */}
-      <div className="p-4 bg-surface border-b border-gray-100">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-sm font-medium text-gray-600">Step {currentStep} of {totalSteps}</span>
-          <span className="text-sm text-gray-500">
-            {currentStep === 1 ? 'Company Info' : currentStep === 2 ? 'Services' : 'Description'}
-          </span>
+      <div className="p-4">
+        {/* Progress Bar */}
+        <div className="mb-6">
+          <Progress value={(step / 3) * 100} className="w-full" />
+          <div className="flex justify-between text-xs text-gray-500 mt-2">
+            <span>Legal Info</span>
+            <span>Services</span>
+            <span>Details</span>
+          </div>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div 
-            className="bg-primary h-2 rounded-full transition-all duration-300"
-            style={{ width: `${(currentStep / totalSteps) * 100}%` }}
-          ></div>
+
+        {/* Step 1: Legal Information */}
+        {step === 1 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Building className="h-5 w-5" />
+                <span>Legal Information</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="legal-name">Company Legal Name *</Label>
+                <Input
+                  id="legal-name"
+                  value={companyData.legalName}
+                  onChange={(e) => setCompanyData(prev => ({ ...prev, legalName: e.target.value }))}
+                  placeholder="Enter your company's legal name"
+                  data-testid="input-legal-name"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="license-number">Trade License Number *</Label>
+                <Input
+                  id="license-number"
+                  value={companyData.licenseNumber}
+                  onChange={(e) => setCompanyData(prev => ({ ...prev, licenseNumber: e.target.value }))}
+                  placeholder="Enter your trade license number"
+                  data-testid="input-license-number"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  value={companyData.phone}
+                  onChange={(e) => setCompanyData(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="+971 XX XXX XXXX"
+                  data-testid="input-phone"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="address">Business Address</Label>
+                <Textarea
+                  id="address"
+                  value={companyData.address}
+                  onChange={(e) => setCompanyData(prev => ({ ...prev, address: e.target.value }))}
+                  placeholder="Enter your business address"
+                  rows={3}
+                  data-testid="textarea-address"
+                />
+              </div>
+
+              <div>
+                <Label>Upload Trade License *</Label>
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center">
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(e) => setLicenseFile(e.target.files?.[0] || null)}
+                    className="hidden"
+                    id="license-upload"
+                  />
+                  <label htmlFor="license-upload" className="cursor-pointer">
+                    <Upload className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-600">
+                      {licenseFile ? licenseFile.name : 'Click to upload trade license'}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">PDF or Image files only</p>
+                  </label>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step 2: Service Areas & Types */}
+        {step === 2 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <MapPin className="h-5 w-5" />
+                <span>Service Coverage</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label className="text-base font-medium">Service Areas in UAE *</Label>
+                <p className="text-sm text-gray-600 mb-3">Select the areas where you provide services</p>
+                <div className="space-y-2">
+                  {uaeAreas.map((area) => (
+                    <div key={area} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`area-${area}`}
+                        checked={companyData.serviceAreas.includes(area)}
+                        onCheckedChange={(checked) => 
+                          handleServiceAreaChange(area, checked as boolean)
+                        }
+                        data-testid={`checkbox-area-${area.toLowerCase().replace(/\s+/g, '-')}`}
+                      />
+                      <Label htmlFor={`area-${area}`} className="text-sm">
+                        {area}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-base font-medium">Service Types *</Label>
+                <p className="text-sm text-gray-600 mb-3">Select the services you provide</p>
+                <div className="space-y-2">
+                  {serviceTypes.map((type) => (
+                    <div key={type} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`service-${type}`}
+                        checked={companyData.serviceTypes.includes(type)}
+                        onCheckedChange={(checked) => 
+                          handleServiceTypeChange(type, checked as boolean)
+                        }
+                        data-testid={`checkbox-service-${type.toLowerCase().replace(/\s+/g, '-')}`}
+                      />
+                      <Label htmlFor={`service-${type}`} className="text-sm">
+                        {type}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step 3: Additional Details */}
+        {step === 3 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <FileText className="h-5 w-5" />
+                <span>Company Details</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="description">Company Description *</Label>
+                <Textarea
+                  id="description"
+                  value={companyData.description}
+                  onChange={(e) => setCompanyData(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Describe your company, experience, and what makes you unique"
+                  rows={4}
+                  data-testid="textarea-description"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="response-time">Typical Response Time *</Label>
+                <Select
+                  value={companyData.responseTime}
+                  onValueChange={(value) => setCompanyData(prev => ({ ...prev, responseTime: value }))}
+                >
+                  <SelectTrigger data-testid="select-response-time">
+                    <SelectValue placeholder="Select response time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1-2 hours">1-2 hours</SelectItem>
+                    <SelectItem value="2-4 hours">2-4 hours</SelectItem>
+                    <SelectItem value="4-8 hours">4-8 hours</SelectItem>
+                    <SelectItem value="Same day">Same day</SelectItem>
+                    <SelectItem value="Next day">Next day</SelectItem>
+                    <SelectItem value="2-3 days">2-3 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-medium text-blue-800 mb-2">Review Process</h4>
+                <p className="text-sm text-blue-700">
+                  Your application will be reviewed within 2-3 business days. We'll verify your trade license 
+                  and contact information before approving your account.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Navigation Buttons */}
+        <div className="flex justify-between mt-6">
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            disabled={step === 1}
+            data-testid="button-previous"
+          >
+            Previous
+          </Button>
+          
+          {step < 3 ? (
+            <Button
+              onClick={handleNext}
+              disabled={!canProceed()}
+              data-testid="button-next"
+            >
+              Next
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={!canProceed() || companyRegistrationMutation.isPending}
+              data-testid="button-submit"
+            >
+              {companyRegistrationMutation.isPending ? 'Submitting...' : 'Submit for Review'}
+            </Button>
+          )}
         </div>
       </div>
-
-      {/* Main Content */}
-      <main className="p-4 pb-20">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            
-            {/* Step 1: Company Information */}
-            {currentStep === 1 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Company Information</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="legalCompanyName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Legal Company Name *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="Enter your legal company name"
-                            className="placeholder:text-gray-400"
-                            {...field} 
-                            data-testid="input-company-name"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contact Phone *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="+971 50 123 4567"
-                            className="placeholder:text-gray-400"
-                            {...field} 
-                            data-testid="input-phone"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Business Email *</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="email"
-                            placeholder="info@company.com"
-                            className="placeholder:text-gray-400"
-                            {...field} 
-                            data-testid="input-email"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="website"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Website (Optional)</FormLabel>
-                        <FormControl>
-                          <Input 
-                            placeholder="https://www.company.com"
-                            className="placeholder:text-gray-400"
-                            {...field} 
-                            data-testid="input-website"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Trade License Upload */}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Trade License *</label>
-                    <div 
-                      className="border-2 border-dashed border-gray-200 rounded-lg p-6 text-center cursor-pointer hover:border-gray-300 transition-colors"
-                      onClick={handleFileUploadClick}
-                    >
-                      {!tradeLicense ? (
-                        <>
-                          <Upload className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                          <p className="text-sm text-gray-500">Upload your trade license</p>
-                          <p className="text-xs text-gray-400 mt-1">PDF, JPEG, or PNG (max 5MB)</p>
-                        </>
-                      ) : (
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <FileText className="h-6 w-6 text-primary" />
-                            <span className="text-sm text-gray-700">{tradeLicense.name}</span>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="sm"
-                            className="h-8 w-8 rounded-full p-0"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeTradeLicense();
-                            }}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      )}
-                      <input 
-                        ref={fileInputRef}
-                        type="file" 
-                        className="hidden" 
-                        accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={handleFileSelect}
-                        data-testid="input-trade-license"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Step 2: Services and Areas */}
-            {currentStep === 2 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Services & Coverage</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {/* Service Types */}
-                  <FormField
-                    control={form.control}
-                    name="serviceTypes"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Services Provided *</FormLabel>
-                        <div className="grid grid-cols-2 gap-3 mt-2">
-                          {SERVICE_TYPES.map((service) => (
-                            <FormField
-                              key={service.id}
-                              control={form.control}
-                              name="serviceTypes"
-                              render={({ field }) => {
-                                return (
-                                  <FormItem
-                                    key={service.id}
-                                    className="flex flex-row items-center space-x-3 space-y-0"
-                                  >
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(service.id)}
-                                        onCheckedChange={(checked) => {
-                                          return checked
-                                            ? field.onChange([...field.value, service.id])
-                                            : field.onChange(
-                                                field.value?.filter(
-                                                  (value) => value !== service.id
-                                                )
-                                              )
-                                        }}
-                                        data-testid={`checkbox-service-${service.id}`}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="text-sm font-normal">
-                                      {service.name}
-                                    </FormLabel>
-                                  </FormItem>
-                                )
-                              }}
-                            />
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* Service Areas */}
-                  <FormField
-                    control={form.control}
-                    name="serviceAreas"
-                    render={() => (
-                      <FormItem>
-                        <FormLabel>Areas Served *</FormLabel>
-                        <div className="grid grid-cols-2 gap-3 mt-2">
-                          {SERVICE_AREAS.map((area) => (
-                            <FormField
-                              key={area}
-                              control={form.control}
-                              name="serviceAreas"
-                              render={({ field }) => {
-                                return (
-                                  <FormItem
-                                    key={area}
-                                    className="flex flex-row items-center space-x-3 space-y-0"
-                                  >
-                                    <FormControl>
-                                      <Checkbox
-                                        checked={field.value?.includes(area)}
-                                        onCheckedChange={(checked) => {
-                                          return checked
-                                            ? field.onChange([...field.value, area])
-                                            : field.onChange(
-                                                field.value?.filter(
-                                                  (value) => value !== area
-                                                )
-                                              )
-                                        }}
-                                        data-testid={`checkbox-area-${area.toLowerCase().replace(' ', '-')}`}
-                                      />
-                                    </FormControl>
-                                    <FormLabel className="text-sm font-normal">
-                                      {area}
-                                    </FormLabel>
-                                  </FormItem>
-                                )
-                              }}
-                            />
-                          ))}
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Step 3: Company Description */}
-            {currentStep === 3 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Company Description</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>About Your Company *</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder="Describe your company, experience, certifications, and what makes you stand out. This will be visible to potential customers."
-                            className="h-32 resize-none placeholder:text-gray-400"
-                            {...field}
-                            data-testid="textarea-description"
-                          />
-                        </FormControl>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {field.value?.length || 0}/500 characters (minimum 50 required)
-                        </div>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-                    <h4 className="font-medium text-blue-900 mb-2">Review Process</h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      <li>• Your application will be reviewed within 2-3 business days</li>
-                      <li>• We will verify your trade license and company information</li>
-                      <li>• Once approved, you can start receiving service requests</li>
-                      <li>• You'll receive an email notification upon approval</li>
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Navigation Buttons */}
-            <div className="flex space-x-3">
-              {currentStep > 1 && (
-                <Button 
-                  type="button"
-                  variant="outline"
-                  onClick={prevStep}
-                  className="flex-1"
-                  data-testid="button-previous"
-                >
-                  Previous
-                </Button>
-              )}
-              
-              {currentStep < totalSteps ? (
-                <Button 
-                  type="button"
-                  onClick={nextStep}
-                  className="flex-1"
-                  data-testid="button-next"
-                >
-                  Next
-                </Button>
-              ) : (
-                <Button 
-                  type="submit"
-                  disabled={onboardingMutation.isPending}
-                  className="flex-1"
-                  data-testid="button-submit"
-                >
-                  {onboardingMutation.isPending ? "Submitting..." : "Submit Application"}
-                </Button>
-              )}
-            </div>
-          </form>
-        </Form>
-      </main>
-
-      <BottomNavigation />
     </div>
   );
 }
