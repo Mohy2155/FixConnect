@@ -5,10 +5,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Stars } from "@/components/ui/stars";
 import { BottomNavigation } from "@/components/bottom-navigation";
-import { ArrowLeft, Clock, MapPin, Phone, MessageSquare, Star, CheckCircle } from "lucide-react";
+import { ArrowLeft, Clock, MapPin, Phone, MessageSquare, Star, CheckCircle, X, Camera } from "lucide-react";
 import { useLocation, useRoute } from "wouter";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { ServiceRequest, Quote, Company } from "@shared/schema";
@@ -20,6 +25,13 @@ export default function JobDetails() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [match, params] = useRoute('/jobs/:jobId');
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showCompleteDialog, setShowCompleteDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelExplanation, setCancelExplanation] = useState('');
+  const [completionRating, setCompletionRating] = useState(0);
+  const [completionFeedback, setCompletionFeedback] = useState('');
+  const [cancelImage, setCancelImage] = useState<File | null>(null);
   
   const jobId = params?.jobId;
 
@@ -74,6 +86,35 @@ export default function JobDetails() {
     }
   }, [user, navigate]);
 
+  // Cancellation reasons
+  const companyReasons = [
+    'Required parts/materials unavailable or delayed',
+    'Equipment/tools failure or not available in time', 
+    'Pricing dispute after acceptance',
+    'Customer unresponsive / cannot be contacted',
+    'Customer changed job requirements beyond original scope',
+    'Access to property not possible (locked, no permission, wrong address)',
+    'Severe weather preventing work',
+    'Transportation issues (road closure, accident, etc.)',
+    'Other (please specify)'
+  ];
+
+  const customerReasons = [
+    'No longer need the service',
+    'Found alternative service provider',
+    'Decided to do the work myself',
+    'Job requirements changed',
+    'Unexpected financial issue',
+    'Not available at the scheduled time',
+    'Need to reschedule to a later date',
+    'Access to property not available (keys, permissions, etc.)',
+    'Emergency situation at property (water leak, fire, etc.)',
+    'Weather conditions',
+    'Utility/service interruption (power, water, gas, etc.)',
+    'Personal emergency',
+    'Other (please specify)'
+  ];
+
   const handleBack = () => {
     navigate('/jobs');
   };
@@ -88,13 +129,96 @@ export default function JobDetails() {
 
   const handleRejectQuote = (quoteId: string) => {
     toast({
-      title: "Quote Rejected",
+      title: "Quote Rejected", 
       description: "The quote has been rejected. You can still accept other quotes.",
     });
   };
 
   const handleContactCompany = (companyId: string) => {
     navigate(`/messages?jobId=${jobId}&companyId=${companyId}`);
+  };
+
+  // Job cancellation mutation
+  const cancelJobMutation = useMutation({
+    mutationFn: async (data: { reason: string; explanation: string; image?: File }) => {
+      const formData = new FormData();
+      formData.append('reason', data.reason);
+      formData.append('explanation', data.explanation);
+      if (data.image) {
+        formData.append('image', data.image);
+      }
+      return await apiRequest('POST', `/api/service-requests/${jobId}/cancel`, formData);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Job Cancelled",
+        description: "The job has been cancelled successfully.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/service-requests'] });
+      navigate('/jobs');
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to cancel job. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Job completion mutation  
+  const completeJobMutation = useMutation({
+    mutationFn: async (data: { rating: number; feedback?: string }) => {
+      return await apiRequest('POST', `/api/service-requests/${jobId}/complete`, data);
+    },
+    onSuccess: () => {
+      toast({
+        title: "Job Completed",
+        description: "Thank you for your feedback! The job has been marked as complete.",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/service-requests'] });
+      navigate('/jobs');
+    },
+    onError: (error) => {
+      toast({
+        title: "Error", 
+        description: "Failed to complete job. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCancelJob = () => {
+    if (!cancelReason || !cancelExplanation) {
+      toast({
+        title: "Missing Information",
+        description: "Please provide a reason and explanation for cancellation.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    cancelJobMutation.mutate({
+      reason: cancelReason,
+      explanation: cancelExplanation,
+      image: cancelImage || undefined,
+    });
+  };
+
+  const handleCompleteJob = () => {
+    if (completionRating === 0) {
+      toast({
+        title: "Rating Required",
+        description: "Please provide a rating for the service.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    completeJobMutation.mutate({
+      rating: completionRating,
+      feedback: completionFeedback || undefined,
+    });
   };
 
   const getStatusColor = (status?: string | null) => {
@@ -171,6 +295,33 @@ export default function JobDetails() {
 
       {/* Main Content */}
       <main className="pb-20">
+        {/* Job Management Actions */}
+        <div className="p-4 border-b border-gray-100">
+          <div className="flex space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => setShowCancelDialog(true)}
+              data-testid="button-cancel-job"
+            >
+              <X className="h-4 w-4 mr-2" />
+              Cancel Job
+            </Button>
+            {(job.status === 'in_progress' || job.status === 'approved') && (
+              <Button
+                size="sm"
+                className="flex-1 bg-green-600 hover:bg-green-700"
+                onClick={() => setShowCompleteDialog(true)}
+                data-testid="button-complete-job"
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Mark Complete
+              </Button>
+            )}
+          </div>
+        </div>
+
         {/* Job Info */}
         <div className="p-4">
           <Card>
@@ -349,6 +500,137 @@ export default function JobDetails() {
             </div>
           </div>
         )}
+
+        {/* Cancel Job Dialog */}
+        <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+          <DialogContent className="max-w-sm mx-auto">
+            <DialogHeader>
+              <DialogTitle>Cancel Job</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="cancel-reason">Reason for Cancellation</Label>
+                <Select value={cancelReason} onValueChange={setCancelReason}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a reason" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customerReasons.map((reason) => (
+                      <SelectItem key={reason} value={reason}>
+                        {reason}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div>
+                <Label htmlFor="cancel-explanation">
+                  {cancelReason === 'Other (please specify)' ? 'Please specify reason' : 'Additional explanation'} *
+                </Label>
+                <Textarea
+                  id="cancel-explanation"
+                  value={cancelExplanation}
+                  onChange={(e) => setCancelExplanation(e.target.value)}
+                  placeholder="Please provide details..."
+                  className="min-h-[80px]"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="cancel-image">Upload Image (Optional)</Label>
+                <div className="mt-2">
+                  <input
+                    type="file"
+                    id="cancel-image"
+                    accept="image/*"
+                    onChange={(e) => setCancelImage(e.target.files?.[0] || null)}
+                    className="text-sm"
+                  />
+                  {cancelImage && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      Selected: {cancelImage.name}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCancelDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive"
+                onClick={handleCancelJob}
+                disabled={cancelJobMutation.isPending || !cancelReason || !cancelExplanation}
+              >
+                {cancelJobMutation.isPending ? "Cancelling..." : "Cancel Job"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Complete Job Dialog */}
+        <Dialog open={showCompleteDialog} onOpenChange={setShowCompleteDialog}>
+          <DialogContent className="max-w-sm mx-auto">
+            <DialogHeader>
+              <DialogTitle>Complete Job</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label>Rate the Service *</Label>
+                <div className="flex items-center space-x-1 mt-2">
+                  {[1, 2, 3, 4, 5].map((rating) => (
+                    <button
+                      key={rating}
+                      type="button"
+                      onClick={() => setCompletionRating(rating)}
+                      className={`p-1 ${
+                        rating <= completionRating 
+                          ? 'text-yellow-400' 
+                          : 'text-gray-300'
+                      }`}
+                    >
+                      <Star className="h-6 w-6 fill-current" />
+                    </button>
+                  ))}
+                  <span className="ml-2 text-sm text-gray-600">
+                    {completionRating > 0 ? `${completionRating}/5` : 'No rating'}
+                  </span>
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="completion-feedback">Feedback (Optional)</Label>
+                <Textarea
+                  id="completion-feedback"
+                  value={completionFeedback}
+                  onChange={(e) => setCompletionFeedback(e.target.value)}
+                  placeholder="Share your experience with this service..."
+                  className="min-h-[80px]"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowCompleteDialog(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                className="bg-green-600 hover:bg-green-700"
+                onClick={handleCompleteJob}
+                disabled={completeJobMutation.isPending || completionRating === 0}
+              >
+                {completeJobMutation.isPending ? "Completing..." : "Complete Job"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
 
       <BottomNavigation />
