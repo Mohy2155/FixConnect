@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -12,8 +12,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Wrench, Eye, EyeOff } from "lucide-react";
+import { Wrench, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { LanguageSelector } from '@/components/language-selector';
+import { Link } from "wouter";
 
 // Validation schemas
 const loginSchema = z.object({
@@ -28,7 +29,7 @@ const registerSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   phone: z.string().optional(),
-  role: z.enum(["homeowner", "company"]).default("homeowner"),
+  role: z.enum(["homeowner", "company"]),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],
@@ -42,6 +43,16 @@ export default function Auth() {
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [suggestedRole, setSuggestedRole] = useState<"homeowner" | "company">("homeowner");
+
+  // Check URL params for suggested role
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const roleParam = params.get('role');
+    if (roleParam === 'homeowner' || roleParam === 'company') {
+      setSuggestedRole(roleParam);
+    }
+  }, []);
 
   const loginForm = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -60,9 +71,14 @@ export default function Auth() {
       firstName: "",
       lastName: "",
       phone: "",
-      role: "homeowner",
+      role: suggestedRole,
     },
   });
+
+  // Update form default when suggestedRole changes
+  useEffect(() => {
+    registerForm.setValue('role', suggestedRole);
+  }, [suggestedRole, registerForm]);
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
@@ -129,12 +145,20 @@ export default function Auth() {
         <div className="max-w-sm mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-3">
+              <Link href="/" className="text-white hover:text-gray-200">
+                <ArrowLeft className="h-6 w-6" />
+              </Link>
               <Wrench className="h-8 w-8 text-white" />
               <h1 className="text-2xl font-bold text-white">FixConnect</h1>
             </div>
             <LanguageSelector variant="button" size="sm" />
           </div>
-          <p className="text-white text-lg text-center font-medium">UAE's Premier Home Maintenance Platform</p>
+          <p className="text-white text-lg text-center font-medium">
+            {suggestedRole === 'company' 
+              ? 'Join as a Service Provider' 
+              : 'Connect with Trusted Professionals'
+            }
+          </p>
         </div>
       </header>
 

@@ -8,11 +8,11 @@ export default function Landing() {
   const { t } = useTranslation();
   
   const handleHomeownerLogin = () => {
-    window.location.href = "/auth";
+    window.location.href = "/auth?role=homeowner";
   };
 
   const handleCompanyLogin = () => {
-    window.location.href = "/auth";
+    window.location.href = "/auth?role=company";
   };
 
   return (
