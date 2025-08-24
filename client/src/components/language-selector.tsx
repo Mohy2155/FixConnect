@@ -31,14 +31,16 @@ export function LanguageSelector({ variant = 'select', size = 'sm' }: LanguageSe
   if (variant === 'button') {
     return (
       <div className="flex items-center space-x-1 rtl:space-x-reverse">
-        <Globe className="h-4 w-4 text-gray-500" />
+        <Globe className="h-4 w-4 text-white" />
         <div className="flex space-x-1 rtl:space-x-reverse">
           {languages.map((language) => (
             <Button
               key={language.code}
-              variant={i18n.language === language.code ? 'default' : 'ghost'}
+              variant={i18n.language === language.code ? 'secondary' : 'ghost'}
               size="sm"
-              className={`text-xs px-2 py-1 ${
+              className={`text-xs px-2 py-1 text-white hover:bg-white hover:text-blue-600 ${
+                i18n.language === language.code ? 'bg-white text-blue-600' : 'bg-transparent'
+              } ${
                 size === 'sm' ? 'h-6 text-xs' : size === 'lg' ? 'h-8 text-sm' : 'h-7 text-xs'
               }`}
               onClick={() => handleLanguageChange(language.code)}

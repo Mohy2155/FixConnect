@@ -18,14 +18,16 @@ export default function Landing() {
   return (
         <div className="min-h-screen bg-background">
           {/* Header */}
-          <header className="bg-primary text-white px-4 py-6">
+          <header className="bg-blue-600 text-white px-4 py-6">
             <div className="max-w-sm mx-auto">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3 rtl:space-x-reverse">
-                  <Wrench className="h-8 w-8" />
-                  <h1 className="text-2xl font-bold">{t('app.name')}</h1>
+                  <Wrench className="h-8 w-8 text-white" />
+                  <h1 className="text-2xl font-bold text-white">{t('app.name')}</h1>
                 </div>
-                <LanguageSelector variant="button" size="sm" />
+                <div className="text-white">
+                  <LanguageSelector variant="button" size="sm" />
+                </div>
               </div>
               <p className="text-white text-lg text-center font-medium">{t('app.tagline')}</p>
             </div>
