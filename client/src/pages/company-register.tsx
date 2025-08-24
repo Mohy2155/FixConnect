@@ -109,7 +109,7 @@ export default function CompanyRegister() {
         <div className="space-y-3">
           <Button
             onClick={handleCompanySignup}
-            className="w-full bg-primary hover:bg-blue-700 text-white py-3"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 font-semibold"
             data-testid="button-register-company"
           >
             Register as Company
