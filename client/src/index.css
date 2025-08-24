@@ -195,16 +195,24 @@
   /* Nuclear option: Force all Radix components above everything */
   [data-radix-select-content],
   [data-radix-popper-content-wrapper],
-  [data-radix-tooltip-content] {
+  [data-radix-tooltip-content],
+  [data-radix-dialog-content] {
     z-index: 2147483647 !important;
     position: fixed !important;
     isolation: isolate !important;
+  }
+
+  /* Dialog specific fixes */
+  [data-radix-dialog-overlay] {
+    z-index: 2147483646 !important;
+    position: fixed !important;
   }
 
   /* Toast positioning - appear from top */
   [data-sonner-toaster] {
     top: 20px !important;
     bottom: auto !important;
+    z-index: 2147483640 !important;
   }
 
   [data-sonner-toast] {

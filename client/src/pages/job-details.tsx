@@ -513,20 +513,22 @@ export default function JobDetails() {
 
         {/* Cancel Job Dialog */}
         <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-          <DialogContent className="max-w-sm mx-auto z-modal">
+          <DialogContent className="max-w-md mx-auto p-6">
             <DialogHeader>
-              <DialogTitle>Cancel Job</DialogTitle>
+              <DialogTitle className="text-lg font-semibold">Cancel Job Request</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="cancel-reason">Reason for Cancellation *</Label>
+            <div className="space-y-6 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="cancel-reason" className="text-sm font-medium">
+                  Reason for Cancellation *
+                </Label>
                 <Select value={cancelReason} onValueChange={setCancelReason}>
-                  <SelectTrigger className="mt-2">
-                    <SelectValue placeholder="Select a reason" />
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Please select a reason" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-60">
+                  <SelectContent className="max-h-60 z-[9999]">
                     {customerReasons.map((reason) => (
-                      <SelectItem key={reason} value={reason}>
+                      <SelectItem key={reason} value={reason} className="text-sm">
                         {reason}
                       </SelectItem>
                     ))}
@@ -534,8 +536,8 @@ export default function JobDetails() {
                 </Select>
               </div>
               
-              <div>
-                <Label htmlFor="cancel-explanation">
+              <div className="space-y-2">
+                <Label htmlFor="cancel-explanation" className="text-sm font-medium">
                   {cancelReason === 'Other (please specify)' ? 'Please specify reason' : 'Additional explanation'} *
                 </Label>
                 <Textarea
@@ -545,32 +547,44 @@ export default function JobDetails() {
                   placeholder={cancelReason === 'Other (please specify)' 
                     ? "Please specify your reason for cancellation..." 
                     : "Please provide additional details..."}
-                  className="min-h-[80px] mt-2"
+                  className="min-h-[100px] resize-none"
+                  rows={4}
                 />
               </div>
 
-              <div>
-                <Label htmlFor="cancel-image">Upload Image (Optional)</Label>
-                <div className="mt-2">
+              <div className="space-y-2">
+                <Label htmlFor="cancel-image" className="text-sm font-medium">
+                  Upload Image (Optional)
+                </Label>
+                <div className="flex items-center gap-2">
                   <input
                     type="file"
                     id="cancel-image"
                     accept="image/*"
                     onChange={(e) => setCancelImage(e.target.files?.[0] || null)}
-                    className="text-sm"
+                    className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
                   />
                   {cancelImage && (
-                    <p className="text-sm text-gray-600 mt-1">
-                      Selected: {cancelImage.name}
-                    </p>
+                    <Camera className="h-4 w-4 text-green-600" />
                   )}
                 </div>
+                {cancelImage && (
+                  <p className="text-xs text-gray-600 mt-1">
+                    Selected: {cancelImage.name}
+                  </p>
+                )}
               </div>
             </div>
-            <DialogFooter>
+            <DialogFooter className="gap-2 mt-6">
               <Button 
                 variant="outline" 
-                onClick={() => setShowCancelDialog(false)}
+                onClick={() => {
+                  setShowCancelDialog(false);
+                  setCancelReason('');
+                  setCancelExplanation('');
+                  setCancelImage(null);
+                }}
+                className="flex-1"
               >
                 Cancel
               </Button>
@@ -578,8 +592,9 @@ export default function JobDetails() {
                 variant="destructive"
                 onClick={handleCancelJob}
                 disabled={cancelJobMutation.isPending || !cancelReason || !cancelExplanation}
+                className="flex-1"
               >
-                {cancelJobMutation.isPending ? "Cancelling..." : "Cancel Job"}
+                {cancelJobMutation.isPending ? "Cancelling..." : "Confirm Cancel"}
               </Button>
             </DialogFooter>
           </DialogContent>
