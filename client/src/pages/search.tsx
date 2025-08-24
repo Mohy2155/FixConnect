@@ -347,38 +347,7 @@ export default function Search() {
           )}
         </div>
 
-        {/* Quick Actions */}
-        <Card className="mt-6">
-          <CardContent className="p-4">
-            <h3 className="font-semibold mb-3">Quick Actions</h3>
-            <div className="space-y-2">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => navigate('/service-request')}
-                data-testid="button-emergency-service"
-              >
-                🚨 Emergency Service Request
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => navigate('/service-request')}
-                data-testid="button-schedule-maintenance"
-              >
-                📅 Schedule Maintenance
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => navigate('/service-request')}
-                data-testid="button-get-quote"
-              >
-                💰 Get Multiple Quotes
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+
       </main>
 
       <BottomNavigation />
