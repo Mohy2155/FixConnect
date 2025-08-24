@@ -513,7 +513,7 @@ export default function JobDetails() {
 
         {/* Cancel Job Dialog */}
         <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-          <DialogContent className="max-w-md mx-auto p-6">
+          <DialogContent className="max-w-md mx-auto p-6 z-[10000]" style={{ zIndex: 10000 }}>
             <DialogHeader>
               <DialogTitle className="text-lg font-semibold">Cancel Job Request</DialogTitle>
             </DialogHeader>
@@ -523,12 +523,12 @@ export default function JobDetails() {
                   Reason for Cancellation *
                 </Label>
                 <Select value={cancelReason} onValueChange={setCancelReason}>
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className="w-full" data-testid="select-cancel-reason">
                     <SelectValue placeholder="Please select a reason" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-60 z-[9999]">
+                  <SelectContent className="max-h-60 z-[10001]" style={{ zIndex: 10001 }}>
                     {customerReasons.map((reason) => (
-                      <SelectItem key={reason} value={reason} className="text-sm">
+                      <SelectItem key={reason} value={reason} className="text-sm" data-testid={`option-${reason.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}>
                         {reason}
                       </SelectItem>
                     ))}
