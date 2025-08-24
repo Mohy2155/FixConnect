@@ -17,6 +17,7 @@ import Search from "@/pages/search";
 import Profile from "@/pages/profile";
 import CompanyDashboard from "@/pages/company-dashboard";
 import CompanyOnboarding from "@/pages/company-onboarding";
+import CompanyProfile from "@/pages/company-profile";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -36,6 +37,7 @@ function Router() {
           <Route path="/search" component={Search} />
           <Route path="/company-dashboard" component={CompanyDashboard} />
           <Route path="/company-onboarding" component={CompanyOnboarding} />
+          <Route path="/companies/:companyId" component={CompanyProfile} />
           <Route path="/profile" component={Profile} />
         </>
       )}

@@ -467,7 +467,17 @@ export default function JobDetails() {
                         data-testid={`button-contact-${quote.id}`}
                       >
                         <MessageSquare className="h-4 w-4 mr-2" />
-                        Contact
+                        Message
+                      </Button>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => navigate(`/companies/${quote.company?.id || quote.companyId}`)}
+                        data-testid={`button-view-company-${quote.id}`}
+                      >
+                        View Profile
                       </Button>
                       
                       {!quote.isAccepted && job.status === 'quoted' && (
@@ -503,18 +513,18 @@ export default function JobDetails() {
 
         {/* Cancel Job Dialog */}
         <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-          <DialogContent className="max-w-sm mx-auto">
+          <DialogContent className="max-w-sm mx-auto z-modal">
             <DialogHeader>
               <DialogTitle>Cancel Job</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="cancel-reason">Reason for Cancellation</Label>
+                <Label htmlFor="cancel-reason">Reason for Cancellation *</Label>
                 <Select value={cancelReason} onValueChange={setCancelReason}>
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-2">
                     <SelectValue placeholder="Select a reason" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-60">
                     {customerReasons.map((reason) => (
                       <SelectItem key={reason} value={reason}>
                         {reason}
@@ -532,8 +542,10 @@ export default function JobDetails() {
                   id="cancel-explanation"
                   value={cancelExplanation}
                   onChange={(e) => setCancelExplanation(e.target.value)}
-                  placeholder="Please provide details..."
-                  className="min-h-[80px]"
+                  placeholder={cancelReason === 'Other (please specify)' 
+                    ? "Please specify your reason for cancellation..." 
+                    : "Please provide additional details..."}
+                  className="min-h-[80px] mt-2"
                 />
               </div>
 
