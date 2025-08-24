@@ -513,22 +513,27 @@ export default function JobDetails() {
 
         {/* Cancel Job Dialog */}
         <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-          <DialogContent className="max-w-md mx-auto p-6 z-[10000]" style={{ zIndex: 10000 }}>
+          <DialogContent className="max-w-md mx-auto p-6 bg-white dark:bg-gray-800" style={{ zIndex: 10000 }}>
             <DialogHeader>
-              <DialogTitle className="text-lg font-semibold">Cancel Job Request</DialogTitle>
+              <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">Cancel Job Request</DialogTitle>
             </DialogHeader>
             <div className="space-y-6 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="cancel-reason" className="text-sm font-medium">
+                <Label htmlFor="cancel-reason" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Reason for Cancellation *
                 </Label>
                 <Select value={cancelReason} onValueChange={setCancelReason}>
-                  <SelectTrigger className="w-full" data-testid="select-cancel-reason">
+                  <SelectTrigger className="w-full bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white" data-testid="select-cancel-reason">
                     <SelectValue placeholder="Please select a reason" />
                   </SelectTrigger>
-                  <SelectContent className="max-h-60 z-[10001]" style={{ zIndex: 10001 }}>
+                  <SelectContent className="max-h-60 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600" style={{ zIndex: 10001 }}>
                     {customerReasons.map((reason) => (
-                      <SelectItem key={reason} value={reason} className="text-sm" data-testid={`option-${reason.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}>
+                      <SelectItem 
+                        key={reason} 
+                        value={reason} 
+                        className="text-sm text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-600" 
+                        data-testid={`option-${reason.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+                      >
                         {reason}
                       </SelectItem>
                     ))}
@@ -537,7 +542,7 @@ export default function JobDetails() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="cancel-explanation" className="text-sm font-medium">
+                <Label htmlFor="cancel-explanation" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {cancelReason === 'Other (please specify)' ? 'Please specify reason' : 'Additional explanation'} *
                 </Label>
                 <Textarea
@@ -547,13 +552,13 @@ export default function JobDetails() {
                   placeholder={cancelReason === 'Other (please specify)' 
                     ? "Please specify your reason for cancellation..." 
                     : "Please provide additional details..."}
-                  className="min-h-[100px] resize-none"
+                  className="min-h-[100px] resize-none bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400"
                   rows={4}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="cancel-image" className="text-sm font-medium">
+                <Label htmlFor="cancel-image" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   Upload Image (Optional)
                 </Label>
                 <div className="flex items-center gap-2">
@@ -562,14 +567,14 @@ export default function JobDetails() {
                     id="cancel-image"
                     accept="image/*"
                     onChange={(e) => setCancelImage(e.target.files?.[0] || null)}
-                    className="text-sm file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:bg-gray-50 file:text-gray-700 hover:file:bg-gray-100"
+                    className="text-sm text-gray-900 dark:text-white file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:bg-gray-50 dark:file:bg-gray-600 file:text-gray-700 dark:file:text-gray-300 hover:file:bg-gray-100 dark:hover:file:bg-gray-500"
                   />
                   {cancelImage && (
                     <Camera className="h-4 w-4 text-green-600" />
                   )}
                 </div>
                 {cancelImage && (
-                  <p className="text-xs text-gray-600 mt-1">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
                     Selected: {cancelImage.name}
                   </p>
                 )}
@@ -584,7 +589,7 @@ export default function JobDetails() {
                   setCancelExplanation('');
                   setCancelImage(null);
                 }}
-                className="flex-1"
+                className="flex-1 bg-white dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600"
               >
                 Cancel
               </Button>
@@ -592,7 +597,7 @@ export default function JobDetails() {
                 variant="destructive"
                 onClick={handleCancelJob}
                 disabled={cancelJobMutation.isPending || !cancelReason || !cancelExplanation}
-                className="flex-1"
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
               >
                 {cancelJobMutation.isPending ? "Cancelling..." : "Confirm Cancel"}
               </Button>
