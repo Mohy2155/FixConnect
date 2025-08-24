@@ -133,23 +133,30 @@ export async function setupAuth(app: Express) {
         // Get user ID from authenticated session
         const userId = req.user?.claims?.sub;
         if (!userId) {
+          console.log('No user ID found, redirecting to login');
           return res.redirect('/api/login');
         }
 
         // Get target role from session
         const targetRole = req.session?.targetRole || 'homeowner';
+        console.log(`Target role from session: ${targetRole}`);
         
         // Update user role in database
         const user = await storage.getUser(userId);
         if (user) {
+          console.log(`Updating user role to: ${targetRole}`);
           await storage.updateUser(userId, { role: targetRole });
+        } else {
+          console.log('User not found in storage during callback');
         }
 
         // Redirect based on role
         if (targetRole === 'company') {
+          console.log('Redirecting to company onboarding');
           // Company users must complete profile setup first
           res.redirect('/company-onboarding');
         } else {
+          console.log('Redirecting to home');
           res.redirect('/');
         }
 

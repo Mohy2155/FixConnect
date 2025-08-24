@@ -58,8 +58,15 @@ export default function CompanyDashboard() {
         variant: "destructive",
       });
       navigate('/');
+    } else if (!companyLoading && user?.role === 'company' && !company) {
+      // Redirect to onboarding if company profile is not set up
+      toast({
+        title: "Profile Setup Required",
+        description: "Please complete your company profile setup first.",
+      });
+      navigate('/company-onboarding');
     }
-  }, [user, authLoading, toast, navigate]);
+  }, [user, authLoading, company, companyLoading, toast, navigate]);
 
   const handleRoleSwitch = () => {
     toast({
