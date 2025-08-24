@@ -4,10 +4,9 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { z } from "zod";
 import { storage } from "./storage";
-import connectPgSimple from "connect-pg-simple";
-import { pool } from "./db";
-
-const PostgresSessionStore = connectPgSimple(session);
+// Use memory store for simplicity - in production, use redis or postgres
+import MemoryStore from "memorystore";
+const MemorySession = MemoryStore(session);
 const scryptAsync = promisify(scrypt);
 
 // Password hashing functions
@@ -50,17 +49,18 @@ export function isAuthenticated(req: any, res: any, next: any) {
 export function setupAuth(app: Express) {
   // Session configuration
   app.use(session({
-    store: new PostgresSessionStore({
-      pool,
-      createTableIfMissing: false, // Prevent duplicate table creation
+    store: new MemorySession({
+      checkPeriod: 86400000, // prune expired entries every 24h
     }),
     secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
+    name: 'sessionId',
     cookie: {
-      secure: process.env.NODE_ENV === 'production',
+      secure: false, // Set to false for development
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: 'lax',
     },
   }));
 
