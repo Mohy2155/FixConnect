@@ -46,6 +46,11 @@ const loginSchema = z.object({
 // Middleware to check if user is authenticated
 export function isAuthenticated(req: any, res: any, next: any) {
   if (req.session?.userId) {
+    // Add user info to request for compatibility
+    req.user = {
+      id: req.session.userId,
+      role: req.session.userRole
+    };
     return next();
   }
   return res.status(401).json({ message: "Unauthorized" });

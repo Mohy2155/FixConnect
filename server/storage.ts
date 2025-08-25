@@ -47,9 +47,12 @@ export interface IStorage {
   getCompany(id: string): Promise<Company | undefined>;
   getCompanyByUserId(userId: string): Promise<Company | undefined>;
   getAllCompanies(): Promise<Company[]>;
+  getPendingCompanies(): Promise<Company[]>;
   getCompaniesByServiceCategory(categoryId: string): Promise<Company[]>;
   createCompany(company: InsertCompany): Promise<Company>;
   updateCompany(id: string, updates: Partial<InsertCompany>): Promise<Company>;
+  approveCompany(id: string): Promise<Company>;
+  rejectCompany(id: string): Promise<Company>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
   
   // Service requests
@@ -146,6 +149,12 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(companies).orderBy(desc(companies.name));
   }
 
+  async getPendingCompanies(): Promise<Company[]> {
+    return await db.select().from(companies)
+      .where(eq(companies.isVerified, false))
+      .orderBy(desc(companies.createdAt));
+  }
+
   async getCompaniesByServiceCategory(categoryId: string): Promise<Company[]> {
     return await db
       .select()
@@ -163,6 +172,24 @@ export class DatabaseStorage implements IStorage {
     const [result] = await db
       .update(companies)
       .set({ ...updates, updatedAt: new Date() })
+      .where(eq(companies.id, id))
+      .returning();
+    return result;
+  }
+
+  async approveCompany(id: string): Promise<Company> {
+    const [result] = await db
+      .update(companies)
+      .set({ isVerified: true, updatedAt: new Date() })
+      .where(eq(companies.id, id))
+      .returning();
+    return result;
+  }
+
+  async rejectCompany(id: string): Promise<Company> {
+    const [result] = await db
+      .update(companies)
+      .set({ isVerified: false, updatedAt: new Date() })
       .where(eq(companies.id, id))
       .returning();
     return result;

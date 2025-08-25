@@ -83,7 +83,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
@@ -106,21 +106,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/auth/user/role', isAuthenticated, async (req: any, res) => {
     try {
       const { role } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       
       if (!['homeowner', 'company'].includes(role)) {
         return res.status(400).json({ message: 'Invalid role' });
       }
       
+      // Get current user data
+      const currentUser = await storage.getUser(userId);
+      if (!currentUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
       // Update user role in database via upsert
       await storage.upsertUser({
-        id: userId,
+        ...currentUser,
         role,
-        email: req.user.claims.email,
-        firstName: req.user.claims.first_name,
-        lastName: req.user.claims.last_name,
-        profileImageUrl: req.user.claims.profile_image_url,
       });
+      
+      // Update session
+      req.session.userRole = role;
       
       res.json({ message: 'Role updated successfully' });
     } catch (error) {
@@ -133,7 +138,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/users/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.params.id;
-      const authenticatedUserId = req.user.claims.sub;
+      const authenticatedUserId = req.session.userId;
       
       // Ensure user can only update their own profile
       if (userId !== authenticatedUserId) {
@@ -220,7 +225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/companies', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const companyData = {
         ...req.body,
         userId,
@@ -491,7 +496,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Company profile endpoints
   app.get('/api/company/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const user = await storage.getUser(userId);
       
       if (!user || user.role !== 'company') {
@@ -512,7 +517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/company/register', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const {
         legalName,
         licenseNumber,
@@ -555,7 +560,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/company/job-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const user = await storage.getUser(userId);
       
       if (!user || user.role !== 'company') {
@@ -585,7 +590,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/company/quotes', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const user = await storage.getUser(userId);
       
       if (!user || user.role !== 'company') {
@@ -602,6 +607,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching quotes:', error);
       res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  // Company approval endpoints - for admin use
+  app.get('/api/admin/companies/pending', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId);
+      
+      // For now, any authenticated user can access admin functions
+      // In production, you'd want proper admin role checking
+      if (!user) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      const pendingCompanies = await storage.getPendingCompanies();
+      res.json(pendingCompanies);
+    } catch (error) {
+      console.error('Error fetching pending companies:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.post('/api/admin/companies/:companyId/approve', isAuthenticated, async (req: any, res) => {
+    try {
+      const { companyId } = req.params;
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId);
+      
+      // For now, any authenticated user can approve companies
+      // In production, you'd want proper admin role checking
+      if (!user) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Check if company exists
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+
+      // Approve the company
+      const approvedCompany = await storage.approveCompany(companyId);
+      
+      res.json({ 
+        message: 'Company approved successfully',
+        company: approvedCompany
+      });
+    } catch (error) {
+      console.error('Error approving company:', error);
+      res.status(500).json({ message: 'Failed to approve company' });
+    }
+  });
+
+  app.post('/api/admin/companies/:companyId/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const { companyId } = req.params;
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId);
+      
+      // For now, any authenticated user can reject companies
+      // In production, you'd want proper admin role checking
+      if (!user) {
+        return res.status(401).json({ message: 'Authentication required' });
+      }
+
+      // Check if company exists
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+
+      // Reject the company (set isVerified to false)
+      const rejectedCompany = await storage.rejectCompany(companyId);
+      
+      res.json({ 
+        message: 'Company rejected successfully',
+        company: rejectedCompany
+      });
+    } catch (error) {
+      console.error('Error rejecting company:', error);
+      res.status(500).json({ message: 'Failed to reject company' });
     }
   });
 

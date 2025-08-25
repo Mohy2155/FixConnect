@@ -1,0 +1,41 @@
+Steps for Approval Process
+Approval Endpoint: Create a new endpoint in your server routes (e.g., in server/routes.ts) to handle approval requests.
+Update Company Status: The endpoint will accept a company ID and update the company's isVerified status.
+Example Implementation
+Here's how you can implement the approval functionality:
+
+// In server/routes.ts
+import express from 'express';
+import storage from './storage'; // Assuming you have a storage module to handle database operations
+const router = express.Router();
+// Approve Company
+router.post('/api/company/approve', async (req: any, res) => {
+  const { companyId } = req.body;
+  try {
+    // Fetch company to verify existence
+    const company = await storage.getCompanyById(companyId); // Ensure you have a method to fetch company by ID
+    if (!company) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
+    // Update company verification status
+    await storage.updateCompany(companyId, { isVerified: true }); // Ensure this method updates the verification status
+    res.status(200).json({ message: 'Company approved successfully' });
+  } catch (error) {
+    console.error('Error approving company:', error);
+    res.status(500).json({ message: 'Failed to approve company' });
+  }
+});
+// After adding this, make sure to connect this router in your main server file
+export default router;
+Calling the Approval Endpoint
+When you want to approve a company, you can send a POST request to the /api/company/approve endpoint with the company ID. An example of how to do this using axios from a front-end component might look like this:
+
+import axios from 'axios';
+async function approveCompany(companyId: string) {
+  try {
+    const response = await axios.post('/api/company/approve', { companyId });
+    console.log(response.data.message); // e.g., "Company approved successfully"
+  } catch (error) {
+    console.error('Approval failed:', error.response.data.message);
+  }
+}
