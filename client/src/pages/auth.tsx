@@ -28,7 +28,12 @@ const registerSchema = z.object({
   confirmPassword: z.string(),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  phone: z.string().optional(),
+  phone: z.string()
+    .min(1, "Phone number is required")
+    .regex(
+      /^(\+971|0)?[0-9]{8,9}$/,
+      "Please enter a valid UAE phone number (e.g., +971501234567 or 0501234567)"
+    ),
   role: z.enum(["homeowner", "company"]),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -319,10 +324,10 @@ export default function Auth() {
                         name="phone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Phone (Optional)</FormLabel>
+                            <FormLabel>Phone Number</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="+971 50 123 4567"
+                                placeholder="+971501234567 or 0501234567"
                                 {...field}
                                 data-testid="input-register-phone"
                               />

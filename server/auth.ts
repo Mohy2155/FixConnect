@@ -29,7 +29,12 @@ const registerSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  phone: z.string().optional(),
+  phone: z.string()
+    .min(1, "Phone number is required")
+    .regex(
+      /^(\+971|0)?[0-9]{8,9}$/,
+      "Please enter a valid UAE phone number (e.g., +971501234567 or 0501234567)"
+    ),
   role: z.enum(["homeowner", "company"]).default("homeowner"),
 });
 
