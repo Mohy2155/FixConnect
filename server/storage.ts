@@ -55,6 +55,11 @@ export interface IStorage {
   rejectCompany(id: string): Promise<Company>;
   updateUser(id: string, updates: Partial<User>): Promise<User>;
   
+  // Admin-only methods
+  getAllUsers(): Promise<User[]>;
+  deleteUser(id: string): Promise<void>;
+  deleteCompany(id: string): Promise<void>;
+  
   // Service requests
   getServiceRequest(id: string): Promise<ServiceRequest | undefined>;
   getServiceRequestsByCustomer(customerId: string): Promise<ServiceRequest[]>;
@@ -337,6 +342,23 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.id, id))
       .returning();
     return result;
+  }
+
+  // Admin-only methods
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users)
+      .orderBy(desc(users.createdAt));
+  }
+
+  async deleteUser(id: string): Promise<void> {
+    // First delete associated company if exists
+    await db.delete(companies).where(eq(companies.userId, id));
+    // Then delete user
+    await db.delete(users).where(eq(users.id, id));
+  }
+
+  async deleteCompany(id: string): Promise<void> {
+    await db.delete(companies).where(eq(companies.id, id));
   }
 
   async getQuotesByCompanyId(companyId: string): Promise<Quote[]> {

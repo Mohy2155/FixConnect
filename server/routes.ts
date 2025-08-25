@@ -10,6 +10,7 @@ import {
   insertCompanySchema
 } from "@shared/schema";
 import { z } from "zod";
+import { hashPassword } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -71,6 +72,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             description: `${partName} repair and replacement`
           });
         }
+      }
+
+      // Create admin account if it doesn't exist
+      const adminEmail = 'admin@fixconnect.ae';
+      const existingAdmin = await storage.getUserByEmail(adminEmail);
+      
+      if (!existingAdmin) {
+        const adminPassword = await hashPassword('FixConnect2024!@#');
+        await storage.createUser({
+          email: adminEmail,
+          password: adminPassword,
+          firstName: 'Admin',
+          lastName: 'User',
+          phone: '+971501234567',
+          role: 'admin'
+        });
+        console.log('Admin account created: admin@fixconnect.ae / FixConnect2024!@#');
       }
 
       res.json({ message: 'Initialized successfully' });
@@ -689,6 +707,94 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error rejecting company:', error);
       res.status(500).json({ message: 'Failed to reject company' });
+    }
+  });
+
+  // Admin-only endpoints for managing users and companies
+  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers);
+    } catch (error) {
+      console.error('Error fetching all users:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/admin/companies', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const allCompanies = await storage.getAllCompanies();
+      res.json(allCompanies);
+    } catch (error) {
+      console.error('Error fetching all companies:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.delete('/api/admin/users/:userId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { userId: targetUserId } = req.params;
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      // Check if target user exists
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Prevent admin from deleting themselves or other admins
+      if (targetUser.role === 'admin') {
+        return res.status(403).json({ message: 'Cannot delete admin users' });
+      }
+
+      await storage.deleteUser(targetUserId);
+      res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting user:', error);
+      res.status(500).json({ message: 'Failed to delete user' });
+    }
+  });
+
+  app.delete('/api/admin/companies/:companyId', isAuthenticated, async (req: any, res) => {
+    try {
+      const { companyId } = req.params;
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      // Check if company exists
+      const company = await storage.getCompany(companyId);
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+
+      await storage.deleteCompany(companyId);
+      res.json({ message: 'Company deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting company:', error);
+      res.status(500).json({ message: 'Failed to delete company' });
     }
   });
 

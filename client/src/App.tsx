@@ -20,6 +20,7 @@ import CompanyDashboard from "@/pages/company-dashboard";
 import CompanyOnboarding from "@/pages/company-onboarding";
 import CompanyRegister from "@/pages/company-register";
 import CompanyProfile from "@/pages/company-profile";
+import AdminDashboard from "@/pages/admin-dashboard";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -35,6 +36,7 @@ function Router() {
       ) : (
         <>
           <Route path="/" component={Home} />
+          <Route path="/admin" component={AdminDashboard} />
           <Route path="/service-request" component={ServiceRequest} />
           <Route path="/company-listings" component={CompanyListings} />
           <Route path="/jobs" component={Jobs} />

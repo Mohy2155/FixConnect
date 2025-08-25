@@ -10,7 +10,7 @@ const MemorySession = MemoryStore(session);
 const scryptAsync = promisify(scrypt);
 
 // Password hashing functions
-async function hashPassword(password: string): Promise<string> {
+export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
@@ -35,7 +35,7 @@ const registerSchema = z.object({
       /^(\+971|0)(50|52|54|55|56|58|2|3|4|6|7|9)[0-9]{7}$/,
       "Enter a valid UAE phone number: +971XXXXXXXX or 0XXXXXXXX (mobile: 50,52,54,55,56,58)"
     ),
-  role: z.enum(["homeowner", "company"]).default("homeowner"),
+  role: z.enum(["homeowner", "company", "admin"]).default("homeowner"),
 });
 
 const loginSchema = z.object({

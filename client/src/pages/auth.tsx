@@ -87,16 +87,21 @@ export default function Auth() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
-      return await apiRequest('POST', '/api/auth/login', data);
+      const response = await apiRequest('POST', '/api/auth/login', data);
+      return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: any) => {
       toast({
         title: "Welcome back!",
         description: "You have been logged in successfully.",
       });
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      // Redirect based on user role will be handled by the app routing
-      window.location.href = '/';
+      // Redirect based on user role from login response
+      if (data.role === 'admin') {
+        window.location.href = '/admin';
+      } else {
+        window.location.href = '/';
+      }
     },
     onError: (error: any) => {
       toast({
@@ -110,7 +115,8 @@ export default function Auth() {
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterForm) => {
       const { confirmPassword, ...registerData } = data;
-      return await apiRequest('POST', '/api/auth/register', registerData);
+      const response = await apiRequest('POST', '/api/auth/register', registerData);
+      return response.json();
     },
     onSuccess: (data: any) => {
       toast({
@@ -120,7 +126,9 @@ export default function Auth() {
       queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       
       // Redirect based on role
-      if (data.role === 'company') {
+      if (data.role === 'admin') {
+        window.location.href = '/admin';
+      } else if (data.role === 'company') {
         window.location.href = '/company-onboarding';
       } else {
         window.location.href = '/';
