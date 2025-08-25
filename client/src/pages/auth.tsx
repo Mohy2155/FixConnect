@@ -31,8 +31,8 @@ const registerSchema = z.object({
   phone: z.string()
     .min(1, "Phone number is required")
     .regex(
-      /^(\+971|0)?[0-9]{8,9}$/,
-      "Please enter a valid UAE phone number (e.g., +971501234567 or 0501234567)"
+      /^(\+971|0)(50|52|54|55|56|58|2|3|4|6|7|9)[0-9]{7}$/,
+      "Enter a valid UAE phone number: +971XXXXXXXX or 0XXXXXXXX (mobile: 50,52,54,55,56,58)"
     ),
   role: z.enum(["homeowner", "company"]),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -330,6 +330,7 @@ export default function Auth() {
                                 placeholder="+971501234567 or 0501234567"
                                 {...field}
                                 data-testid="input-register-phone"
+                                maxLength={13}
                               />
                             </FormControl>
                             <FormMessage />
