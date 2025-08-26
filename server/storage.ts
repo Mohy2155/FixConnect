@@ -60,11 +60,6 @@ export interface IStorage {
   deleteUser(id: string): Promise<void>;
   deleteCompany(id: string): Promise<void>;
   
-  // Email verification methods
-  setEmailVerificationToken(userId: string, token: string, expires: Date): Promise<void>;
-  verifyEmailToken(token: string): Promise<User | null>;
-  markEmailAsVerified(userId: string): Promise<User>;
-  
   // Service requests
   getServiceRequest(id: string): Promise<ServiceRequest | undefined>;
   getServiceRequestsByCustomer(customerId: string): Promise<ServiceRequest[]>;
@@ -364,48 +359,6 @@ export class DatabaseStorage implements IStorage {
 
   async deleteCompany(id: string): Promise<void> {
     await db.delete(companies).where(eq(companies.id, id));
-  }
-
-  // Email verification methods
-  async setEmailVerificationToken(userId: string, token: string, expires: Date): Promise<void> {
-    await db
-      .update(users)
-      .set({
-        emailVerificationToken: token,
-        emailVerificationExpires: expires,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId));
-  }
-
-  async verifyEmailToken(token: string): Promise<User | null> {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(
-        and(
-          eq(users.emailVerificationToken, token),
-          sql`${users.emailVerificationExpires} > NOW()`
-        )
-      )
-      .limit(1);
-    
-    return user || null;
-  }
-
-  async markEmailAsVerified(userId: string): Promise<User> {
-    const [user] = await db
-      .update(users)
-      .set({
-        isEmailVerified: true,
-        emailVerificationToken: null,
-        emailVerificationExpires: null,
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    return user;
   }
 
   async getQuotesByCompanyId(companyId: string): Promise<Quote[]> {
