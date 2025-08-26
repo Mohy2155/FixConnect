@@ -1,7 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Textarea } from "@/components/ui/textarea";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,12 +22,23 @@ import { useLocation } from "wouter";
 import { ServiceRequest } from "@shared/schema";
 import { isUnauthorizedError } from "@/lib/authUtils";
 
+// Review form schema
+const reviewSchema = z.object({
+  rating: z.number().min(1, "Please select a rating").max(5),
+  comment: z.string().optional(),
+});
+
+type ReviewForm = z.infer<typeof reviewSchema>;
+
 export default function Jobs() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [, navigate] = useLocation();
   const [activeFilter, setActiveFilter] = useState<'all' | 'active' | 'completed'>('all');
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [showReviewDialog, setShowReviewDialog] = useState(false);
+  const [selectedJobForReview, setSelectedJobForReview] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<string>('all_time');
 
@@ -37,14 +57,66 @@ export default function Jobs() {
   };
 
   const handleRateService = (jobId: string) => {
-    toast({
-      title: "Rating Service",
-      description: "Rating feature coming soon!",
-    });
+    setSelectedJobForReview(jobId);
+    setShowReviewDialog(true);
   };
 
   const handleCreateRequest = () => {
     navigate('/service-request');
+  };
+
+  // Review form
+  const reviewForm = useForm<ReviewForm>({
+    resolver: zodResolver(reviewSchema),
+    defaultValues: {
+      rating: 0,
+      comment: "",
+    },
+  });
+
+  // Submit review mutation
+  const submitReviewMutation = useMutation({
+    mutationFn: async (data: ReviewForm) => {
+      if (!selectedJobForReview) throw new Error("No job selected");
+      
+      const selectedJob = serviceRequests.find(j => j.id === selectedJobForReview);
+      if (!selectedJob) throw new Error("Job not found");
+      
+      // Find the accepted quote to get the company ID
+      const acceptedQuote = await apiRequest('GET', `/api/service-requests/${selectedJobForReview}/quotes`);
+      const quotes = await acceptedQuote.json();
+      const approved = quotes.find((q: any) => q.isAccepted);
+      
+      if (!approved) throw new Error("No approved quote found");
+      
+      return apiRequest('POST', '/api/reviews', {
+        serviceRequestId: selectedJobForReview,
+        companyId: approved.companyId,
+        rating: data.rating,
+        comment: data.comment || null,
+      });
+    },
+    onSuccess: () => {
+      toast({
+        title: "Review Submitted",
+        description: "Thank you for your feedback!",
+      });
+      setShowReviewDialog(false);
+      setSelectedJobForReview(null);
+      reviewForm.reset();
+      queryClient.invalidateQueries({ queryKey: ['/api/service-requests'] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to submit review. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmitReview = (data: ReviewForm) => {
+    submitReviewMutation.mutate(data);
   };
 
   // Filter jobs based on active filter and advanced filters
@@ -310,6 +382,97 @@ export default function Jobs() {
       </Button>
 
       <BottomNavigation />
+
+      {/* Review Dialog */}
+      <Dialog open={showReviewDialog} onOpenChange={setShowReviewDialog}>
+        <DialogContent className="max-w-md mx-auto">
+          <DialogHeader>
+            <DialogTitle>Rate Your Experience</DialogTitle>
+          </DialogHeader>
+          
+          <Form {...reviewForm}>
+            <form onSubmit={reviewForm.handleSubmit(onSubmitReview)} className="space-y-6">
+              {/* Star Rating */}
+              <FormField
+                control={reviewForm.control}
+                name="rating"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>How would you rate the service? (1-5 stars)</FormLabel>
+                    <FormControl>
+                      <div className="flex justify-center space-x-1">
+                        {[1, 2, 3, 4, 5].map((rating) => (
+                          <button
+                            key={rating}
+                            type="button"
+                            onClick={() => field.onChange(rating)}
+                            className="p-1"
+                          >
+                            <Star
+                              className={`h-8 w-8 transition-colors ${
+                                rating <= field.value 
+                                  ? "fill-yellow-400 text-yellow-400" 
+                                  : "text-gray-300 hover:text-yellow-200"
+                              }`}
+                            />
+                          </button>
+                        ))}
+                      </div>
+                    </FormControl>
+                    <div className="text-center text-sm text-gray-600">
+                      {field.value > 0 ? `${field.value}/5 stars` : 'Select a rating'}
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Comment */}
+              <FormField
+                control={reviewForm.control}
+                name="comment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Leave a comment (optional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        {...field}
+                        placeholder="Share your experience with other homeowners..."
+                        rows={4}
+                        className="resize-none"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Action Buttons */}
+              <div className="flex space-x-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowReviewDialog(false);
+                    reviewForm.reset();
+                  }}
+                  disabled={submitReviewMutation.isPending}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1"
+                  disabled={submitReviewMutation.isPending || reviewForm.watch('rating') === 0}
+                >
+                  {submitReviewMutation.isPending ? 'Submitting...' : 'Submit Review'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

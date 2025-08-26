@@ -376,6 +376,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reviews
+  app.post('/api/reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.session.userId;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'homeowner') {
+        return res.status(403).json({ message: 'Only homeowners can submit reviews' });
+      }
+
+      const reviewData = insertReviewSchema.parse(req.body);
+      
+      // Verify the service request belongs to the user and is completed
+      const serviceRequest = await storage.getServiceRequest(reviewData.serviceRequestId);
+      if (!serviceRequest) {
+        return res.status(404).json({ message: 'Service request not found' });
+      }
+      
+      if (serviceRequest.customerId !== userId) {
+        return res.status(403).json({ message: 'You can only review your own service requests' });
+      }
+      
+      if (serviceRequest.status !== 'completed') {
+        return res.status(400).json({ message: 'Can only review completed service requests' });
+      }
+
+      const review = await storage.createReview({
+        ...reviewData,
+        customerId: userId,
+      });
+      
+      res.status(201).json(review);
+    } catch (error) {
+      console.error('Error creating review:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: 'Invalid review data', 
+          errors: error.errors 
+        });
+      }
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
+  app.get('/api/companies/:companyId/reviews', async (req, res) => {
+    try {
+      const { companyId } = req.params;
+      const reviews = await storage.getReviewsByCompany(companyId);
+      res.json(reviews);
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  });
+
   // Messages  
   app.get('/api/messages/unread-count', isAuthenticated, async (req: any, res) => {
     try {
