@@ -36,6 +36,9 @@ export const users = pgTable("users", {
   phone: varchar("phone"),
   address: text("address"),
   role: varchar("role").notNull().default('homeowner'), // 'homeowner', 'company', or 'admin'
+  isEmailVerified: boolean("is_email_verified").default(false),
+  emailVerificationToken: varchar("email_verification_token"),
+  emailVerificationExpires: timestamp("email_verification_expires"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

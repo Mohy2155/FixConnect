@@ -86,7 +86,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           firstName: 'Admin',
           lastName: 'User',
           phone: '+971501234567',
-          role: 'admin'
+          role: 'admin',
+          isEmailVerified: true, // Admin doesn't need email verification
         });
         console.log('Admin account created: admin@fixconnect.ae / FixConnect2024!@#');
       }
