@@ -96,6 +96,7 @@ export function setupAuth(app: Express) {
         firstName: validatedData.firstName,
         lastName: validatedData.lastName,
         phone: validatedData.phone,
+        address: validatedData.address,
         role: validatedData.role,
       });
 
