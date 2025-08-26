@@ -35,6 +35,7 @@ const registerSchema = z.object({
       /^(\+971|0)(50|52|54|55|56|58|2|3|4|6|7|9)[0-9]{7}$/,
       "Enter a valid UAE phone number: +971XXXXXXXX or 0XXXXXXXX (mobile: 50,52,54,55,56,58)"
     ),
+  address: z.string().min(1, "Address is required"),
   role: z.enum(["homeowner", "company", "admin"]).default("homeowner"),
 });
 

@@ -34,6 +34,7 @@ const registerSchema = z.object({
       /^(\+971|0)(50|52|54|55|56|58|2|3|4|6|7|9)[0-9]{7}$/,
       "Enter a valid UAE phone number: +971XXXXXXXX or 0XXXXXXXX (mobile: 50,52,54,55,56,58)"
     ),
+  address: z.string().min(1, "Address is required"),
   role: z.enum(["homeowner", "company"]),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
@@ -339,6 +340,24 @@ export default function Auth() {
                                 {...field}
                                 data-testid="input-register-phone"
                                 maxLength={13}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={registerForm.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Address</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Enter your address in UAE"
+                                {...field}
+                                data-testid="input-register-address"
                               />
                             </FormControl>
                             <FormMessage />

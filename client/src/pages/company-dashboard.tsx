@@ -109,7 +109,7 @@ export default function CompanyDashboard() {
               variant="ghost"
               size="sm"
               onClick={handleRoleSwitch}
-              className="text-white hover:bg-blue-600"
+              className="text-white bg-white/10 hover:bg-blue-600 border border-white/20"
               data-testid="button-switch-homeowner"
             >
               Switch to Homeowner

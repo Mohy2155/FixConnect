@@ -263,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Company onboarding endpoint
   app.post('/api/companies/onboarding', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       
       // Parse form data
       const {
@@ -319,7 +319,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/companies/:companyId', isAuthenticated, async (req: any, res) => {
     try {
       const { companyId } = req.params;
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       
       // Verify company belongs to user
       const existingCompany = await storage.getCompany(companyId);
@@ -338,7 +338,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Service Requests
   app.get('/api/service-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const serviceRequests = await storage.getServiceRequestsByCustomer(userId);
       res.json(serviceRequests);
     } catch (error) {
@@ -349,7 +349,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/service-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const requestData = {
         ...req.body,
         customerId: userId,
@@ -434,7 +434,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Messages  
   app.get('/api/messages/unread-count', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const count = await storage.getUnreadMessageCount(userId);
       res.json({ count });
     } catch (error) {
@@ -457,7 +457,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Service requests
   app.get('/api/service-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const requests = await storage.getServiceRequestsByCustomer(userId);
       res.json(requests);
     } catch (error) {
@@ -468,7 +468,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/service-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const requestData = insertServiceRequestSchema.parse({ 
         ...req.body, 
         customerId: userId 
@@ -513,7 +513,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Company dashboard routes
   app.get('/api/companies/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const company = await storage.getCompanyByUserId(userId);
       if (!company) {
         return res.status(404).json({ message: 'Company profile not found' });
@@ -538,7 +538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/quotes/company', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.session.userId;
       const company = await storage.getCompanyByUserId(userId);
       if (!company) {
         return res.status(404).json({ message: 'Company not found' });

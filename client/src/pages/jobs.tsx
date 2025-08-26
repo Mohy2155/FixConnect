@@ -165,7 +165,7 @@ export default function Jobs() {
             <Button
               variant="ghost"
               size="sm"
-              className="p-2 hover:bg-blue-600 text-white"
+              className="p-2 text-white bg-white/10 hover:bg-blue-600 border border-white/20"
               onClick={handleBack}
               data-testid="button-back"
             >
@@ -177,7 +177,7 @@ export default function Jobs() {
             <Button
               variant="ghost"
               size="sm"
-              className="p-2 hover:bg-blue-600 text-white"
+              className="p-2 text-white bg-white/10 hover:bg-blue-600 border border-white/20"
               onClick={() => navigate('/search')}
               data-testid="button-search"
             >
@@ -186,7 +186,7 @@ export default function Jobs() {
             <Button
               variant="ghost"
               size="sm"
-              className="p-2 hover:bg-blue-600 text-white"
+              className="p-2 text-white bg-white/10 hover:bg-blue-600 border border-white/20"
               onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
               data-testid="button-filter"
             >
