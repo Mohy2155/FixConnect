@@ -10,9 +10,19 @@ import MemoryStore from "memorystore";
 const MemorySession = MemoryStore(session);
 const scryptAsync = promisify(scrypt);
 
-// JWT Configuration
-const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'your-access-secret-change-in-production';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-change-in-production';
+// JWT Configuration with required secrets in production
+const isProduction = process.env.NODE_ENV === 'production';
+
+if (isProduction && (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET)) {
+  throw new Error('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be set in production environment');
+}
+
+if (isProduction && !process.env.SESSION_SECRET) {
+  throw new Error('SESSION_SECRET must be set in production environment');
+}
+
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'dev-access-secret-change-in-production';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'dev-refresh-secret-change-in-production';
 const ACCESS_TOKEN_TTL = process.env.ACCESS_TOKEN_TTL || '15m';
 const REFRESH_TOKEN_TTL = process.env.REFRESH_TOKEN_TTL || '30d';
 const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
@@ -142,20 +152,21 @@ export function isAuthenticated(req: any, res: any, next: any) {
 }
 
 export function setupAuth(app: Express) {
-  // Session configuration
+  // Session configuration with production-ready security
   app.use(session({
     store: new MemorySession({
       checkPeriod: 86400000, // prune expired entries every 24h
     }),
-    secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+    secret: process.env.SESSION_SECRET || 'dev-session-secret-change-in-production',
     resave: false,
-    saveUninitialized: true,
+    saveUninitialized: false, // Don't create session until something stored
     name: 'sessionId',
     cookie: {
-      secure: false, // Set to false for development
+      secure: isProduction, // Only send over HTTPS in production
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: 'lax',
+      domain: COOKIE_DOMAIN,
     },
   }));
 
@@ -184,9 +195,27 @@ export function setupAuth(app: Express) {
         role: validatedData.role,
       });
 
-      // Create session
+      // Generate JWT tokens
+      const accessToken = generateAccessToken({ id: newUser.id, role: newUser.role });
+      const refreshToken = generateRefreshToken();
+      
+      // Save refresh token
+      await storage.saveRefreshToken({
+        userId: newUser.id,
+        tokenHash: hashRefreshToken(refreshToken),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        userAgent: req.headers['user-agent'] || '',
+        ipAddress: req.ip || req.connection.remoteAddress || '',
+      });
+      
+      // Set JWT cookies
+      setJWTCookies(res, accessToken, refreshToken);
+
+      // Create session for backward compatibility
       req.session.userId = newUser.id;
       req.session.userRole = newUser.role;
+
+      console.log(`[AUTH] JWT tokens issued for new user ${newUser.id}`);
 
       // Return user without password
       const { password, ...userWithoutPassword } = newUser;
@@ -220,9 +249,27 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ message: "Invalid email or password" });
       }
 
-      // Create session
+      // Generate JWT tokens
+      const accessToken = generateAccessToken({ id: user.id, role: user.role });
+      const refreshToken = generateRefreshToken();
+      
+      // Save refresh token
+      await storage.saveRefreshToken({
+        userId: user.id,
+        tokenHash: hashRefreshToken(refreshToken),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        userAgent: req.headers['user-agent'] || '',
+        ipAddress: req.ip || req.connection.remoteAddress || '',
+      });
+      
+      // Set JWT cookies
+      setJWTCookies(res, accessToken, refreshToken);
+
+      // Create session for backward compatibility
       req.session.userId = user.id;
       req.session.userRole = user.role;
+
+      console.log(`[AUTH] JWT tokens issued for user login ${user.id}`);
 
       // Return user without password
       const { password, ...userWithoutPassword } = user;
@@ -239,46 +286,108 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Get current user endpoint
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+
+  // Token refresh endpoint
+  app.post('/api/auth/refresh', async (req: any, res) => {
     try {
-      const user = await storage.getUser(req.session.userId);
+      const refreshToken = req.cookies?.refreshToken;
+      if (!refreshToken) {
+        return res.status(401).json({ message: "No refresh token provided" });
+      }
+
+      // Find the refresh token in the database
+      const tokenHash = hashRefreshToken(refreshToken);
+      const storedToken = await storage.findRefreshTokenByHash(tokenHash);
+      
+      if (!storedToken) {
+        return res.status(401).json({ message: "Invalid or expired refresh token" });
+      }
+
+      // Get user data
+      const user = await storage.getUser(storedToken.userId);
       if (!user) {
         return res.status(401).json({ message: "User not found" });
       }
 
-      // Return user without password
-      const { password, ...userWithoutPassword } = user;
-      res.json(userWithoutPassword);
+      // Revoke the old refresh token
+      await storage.revokeRefreshToken(storedToken.id);
+
+      // Generate new tokens
+      const newAccessToken = generateAccessToken({ id: user.id, role: user.role });
+      const newRefreshToken = generateRefreshToken();
+
+      // Save new refresh token
+      await storage.saveRefreshToken({
+        userId: user.id,
+        tokenHash: hashRefreshToken(newRefreshToken),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        userAgent: req.headers['user-agent'] || '',
+        ipAddress: req.ip || req.connection.remoteAddress || '',
+      });
+
+      // Set new JWT cookies
+      setJWTCookies(res, newAccessToken, newRefreshToken);
+
+      console.log(`[AUTH] Tokens refreshed for user ${user.id}`);
+
+      res.json({ message: "Tokens refreshed successfully" });
     } catch (error) {
-      console.error('Get user error:', error);
+      console.error('Token refresh error:', error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
 
   // Logout endpoint
-  app.post('/api/auth/logout', (req: any, res) => {
-    req.session.destroy((err: any) => {
-      if (err) {
-        console.error('Logout error:', err);
-        return res.status(500).json({ message: "Failed to logout" });
+  app.post('/api/auth/logout', async (req: any, res) => {
+    try {
+      // Revoke refresh tokens if user is authenticated
+      if (req.user?.id) {
+        await storage.revokeRefreshTokensForUser(req.user.id);
+        console.log(`[AUTH] All refresh tokens revoked for user ${req.user.id}`);
       }
-      res.clearCookie('connect.sid');
+      
+      // Clear JWT cookies
+      res.clearCookie('accessToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        domain: COOKIE_DOMAIN,
+      });
+      
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        domain: COOKIE_DOMAIN,
+      });
+
+      // Destroy session for backward compatibility
+      req.session.destroy((err: any) => {
+        if (err) {
+          console.error('Session destruction error:', err);
+        }
+        res.clearCookie('connect.sid');
+      });
+
       res.json({ message: "Logged out successfully" });
-    });
+    } catch (error) {
+      console.error('Logout error:', error);
+      res.status(500).json({ message: "Failed to logout" });
+    }
   });
 
   // Role switching endpoint
   app.post('/api/auth/switch-role', isAuthenticated, async (req: any, res) => {
     try {
       const { role } = req.body;
+      const userId = req.user.id;
       
       if (!["homeowner", "company"].includes(role)) {
         return res.status(400).json({ message: "Invalid role" });
       }
 
       // Get current user
-      const user = await storage.getUser(req.session.userId);
+      const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
@@ -290,8 +399,29 @@ export function setupAuth(app: Express) {
         updatedAt: new Date(),
       });
       
-      // Update session
+      // Revoke existing refresh tokens for security
+      await storage.revokeRefreshTokensForUser(userId);
+      
+      // Generate new JWT tokens with updated role
+      const accessToken = generateAccessToken({ id: userId, role });
+      const refreshToken = generateRefreshToken();
+      
+      // Save new refresh token
+      await storage.saveRefreshToken({
+        userId,
+        tokenHash: hashRefreshToken(refreshToken),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        userAgent: req.headers['user-agent'] || '',
+        ipAddress: req.ip || req.connection.remoteAddress || '',
+      });
+      
+      // Set new JWT cookies
+      setJWTCookies(res, accessToken, refreshToken);
+
+      // Update session for backward compatibility
       req.session.userRole = role;
+
+      console.log(`[AUTH] Role switched and JWT tokens reissued for user ${userId} to role ${role}`);
 
       // Return updated user
       const { password, ...userWithoutPassword } = updatedUser;
