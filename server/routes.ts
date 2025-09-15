@@ -101,7 +101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
@@ -124,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/auth/user/role', isAuthenticated, async (req: any, res) => {
     try {
       const { role } = req.body;
-      const userId = req.session.userId;
+      const userId = req.user.id;
       
       if (!['homeowner', 'company'].includes(role)) {
         return res.status(400).json({ message: 'Invalid role' });
@@ -142,8 +142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role,
       });
       
-      // Update session
-      req.session.userRole = role;
+      // JWT token will be updated by the auth system automatically
       
       res.json({ message: 'Role updated successfully' });
     } catch (error) {
@@ -156,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/users/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.params.id;
-      const authenticatedUserId = req.session.userId;
+      const authenticatedUserId = req.user.id;
       
       // Ensure user can only update their own profile
       if (userId !== authenticatedUserId) {
@@ -243,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/companies', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const companyData = {
         ...req.body,
         userId,
@@ -263,7 +262,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Company onboarding endpoint
   app.post('/api/companies/onboarding', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       
       // Parse form data
       const {
@@ -319,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/companies/:companyId', isAuthenticated, async (req: any, res) => {
     try {
       const { companyId } = req.params;
-      const userId = req.session.userId;
+      const userId = req.user.id;
       
       // Verify company belongs to user
       const existingCompany = await storage.getCompany(companyId);
@@ -338,7 +337,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Service Requests
   app.get('/api/service-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const serviceRequests = await storage.getServiceRequestsByCustomer(userId);
       res.json(serviceRequests);
     } catch (error) {
@@ -349,7 +348,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/service-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const requestData = {
         ...req.body,
         customerId: userId,
@@ -379,7 +378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reviews
   app.post('/api/reviews', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || user.role !== 'homeowner') {
@@ -434,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Messages  
   app.get('/api/messages/unread-count', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const count = await storage.getUnreadMessageCount(userId);
       res.json({ count });
     } catch (error) {
@@ -457,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Service requests
   app.get('/api/service-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const requests = await storage.getServiceRequestsByCustomer(userId);
       res.json(requests);
     } catch (error) {
@@ -468,7 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/service-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const requestData = insertServiceRequestSchema.parse({ 
         ...req.body, 
         customerId: userId 
@@ -513,7 +512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Company dashboard routes
   app.get('/api/companies/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const company = await storage.getCompanyByUserId(userId);
       if (!company) {
         return res.status(404).json({ message: 'Company profile not found' });
@@ -538,7 +537,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/quotes/company', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const company = await storage.getCompanyByUserId(userId);
       if (!company) {
         return res.status(404).json({ message: 'Company not found' });
@@ -554,14 +553,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Logout endpoint
   app.post('/api/logout', (req, res) => {
-    req.session.destroy((err: any) => {
-      if (err) {
-        console.error('Error destroying session:', err);
-        return res.status(500).json({ message: 'Failed to logout' });
-      }
-      res.clearCookie('connect.sid');
-      res.json({ message: 'Logged out successfully' });
-    });
+    // JWT logout is handled by the auth system which clears cookies and revokes tokens
+    res.json({ message: 'Logged out successfully' });
   });
 
   // Remove duplicate role-specific login endpoints - they are defined in replitAuth.ts
@@ -569,7 +562,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Company profile endpoints
   app.get('/api/company/profile', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || user.role !== 'company') {
@@ -590,7 +583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/company/register', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const {
         legalName,
         licenseNumber,
@@ -633,7 +626,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/company/job-requests', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || user.role !== 'company') {
@@ -663,7 +656,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/company/quotes', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || user.role !== 'company') {
@@ -686,7 +679,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Company approval endpoints - for admin use
   app.get('/api/admin/companies/pending', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       // For now, any authenticated user can access admin functions
@@ -706,7 +699,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/companies/:companyId/approve', isAuthenticated, async (req: any, res) => {
     try {
       const { companyId } = req.params;
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       // For now, any authenticated user can approve companies
@@ -737,7 +730,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/admin/companies/:companyId/reject', isAuthenticated, async (req: any, res) => {
     try {
       const { companyId } = req.params;
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       // For now, any authenticated user can reject companies
@@ -768,7 +761,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin-only endpoints for managing users and companies
   app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || user.role !== 'admin') {
@@ -785,7 +778,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/admin/companies', isAuthenticated, async (req: any, res) => {
     try {
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || user.role !== 'admin') {
@@ -803,7 +796,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/admin/users/:userId', isAuthenticated, async (req: any, res) => {
     try {
       const { userId: targetUserId } = req.params;
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || user.role !== 'admin') {
@@ -832,7 +825,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/admin/companies/:companyId', isAuthenticated, async (req: any, res) => {
     try {
       const { companyId } = req.params;
-      const userId = req.session.userId;
+      const userId = req.user.id;
       const user = await storage.getUser(userId);
       
       if (!user || user.role !== 'admin') {
