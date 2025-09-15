@@ -14,18 +14,27 @@ import {
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Session storage table - mandatory for Replit Auth
-export const sessions = pgTable(
-  "sessions",
+// Refresh tokens for JWT authentication
+export const refreshTokens = pgTable(
+  "refresh_tokens",
   {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
+    id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+    userId: varchar("user_id").notNull().references(() => users.id),
+    tokenHash: varchar("token_hash").notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+    createdAt: timestamp("created_at").defaultNow(),
+    revokedAt: timestamp("revoked_at"),
+    userAgent: text("user_agent"),
+    ipAddress: varchar("ip_address"),
   },
-  (table) => [index("IDX_session_expire").on(table.expire)],
+  (table) => [
+    index("IDX_refresh_tokens_user_id").on(table.userId),
+    index("IDX_refresh_tokens_expires_at").on(table.expiresAt),
+    index("IDX_refresh_tokens_token_hash").on(table.tokenHash),
+  ],
 );
 
-// User storage table - mandatory for Replit Auth
+// User storage table
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").unique(),
@@ -255,6 +264,7 @@ export const insertServiceRequestSchema = createInsertSchema(serviceRequests);
 export const insertQuoteSchema = createInsertSchema(quotes);
 export const insertReviewSchema = createInsertSchema(reviews);
 export const insertMessageSchema = createInsertSchema(messages);
+export const insertRefreshTokenSchema = createInsertSchema(refreshTokens);
 
 export type InsertServiceCategory = z.infer<typeof insertServiceCategorySchema>;
 export type InsertServicePart = z.infer<typeof insertServicePartSchema>;
@@ -263,6 +273,7 @@ export type InsertServiceRequest = z.infer<typeof insertServiceRequestSchema>;
 export type InsertQuote = z.infer<typeof insertQuoteSchema>;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
 export type InsertMessage = z.infer<typeof insertMessageSchema>;
+export type InsertRefreshToken = z.infer<typeof insertRefreshTokenSchema>;
 
 export type ServiceCategory = typeof serviceCategories.$inferSelect;
 export type ServicePart = typeof serviceParts.$inferSelect;
@@ -271,3 +282,4 @@ export type ServiceRequest = typeof serviceRequests.$inferSelect;
 export type Quote = typeof quotes.$inferSelect;
 export type Review = typeof reviews.$inferSelect;
 export type Message = typeof messages.$inferSelect;
+export type RefreshToken = typeof refreshTokens.$inferSelect;

@@ -1,13 +1,21 @@
 import { Express } from "express";
 import session from "express-session";
-import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { scrypt, randomBytes, timingSafeEqual, createHash } from "crypto";
 import { promisify } from "util";
 import { z } from "zod";
+import jwt from "jsonwebtoken";
 import { storage } from "./storage";
 // Use memory store for simplicity - in production, use redis or postgres
 import MemoryStore from "memorystore";
 const MemorySession = MemoryStore(session);
 const scryptAsync = promisify(scrypt);
+
+// JWT Configuration
+const JWT_ACCESS_SECRET = process.env.JWT_ACCESS_SECRET || 'your-access-secret-change-in-production';
+const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-refresh-secret-change-in-production';
+const ACCESS_TOKEN_TTL = process.env.ACCESS_TOKEN_TTL || '15m';
+const REFRESH_TOKEN_TTL = process.env.REFRESH_TOKEN_TTL || '30d';
+const COOKIE_DOMAIN = process.env.COOKIE_DOMAIN || undefined;
 
 // Password hashing functions
 export async function hashPassword(password: string): Promise<string> {
@@ -21,6 +29,48 @@ async function comparePasswords(supplied: string, stored: string): Promise<boole
   const hashedBuf = Buffer.from(hashed, "hex");
   const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
   return timingSafeEqual(hashedBuf, suppliedBuf);
+}
+
+// JWT Token utilities
+export function generateAccessToken(payload: { id: string; role: string }): string {
+  return jwt.sign(payload, JWT_ACCESS_SECRET, { expiresIn: ACCESS_TOKEN_TTL } as jwt.SignOptions);
+}
+
+export function generateRefreshToken(): string {
+  return randomBytes(32).toString('hex');
+}
+
+export function verifyAccessToken(token: string): { id: string; role: string } | null {
+  try {
+    return jwt.verify(token, JWT_ACCESS_SECRET) as { id: string; role: string };
+  } catch (error) {
+    return null;
+  }
+}
+
+export function hashRefreshToken(token: string): string {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+// Set JWT cookies
+function setJWTCookies(res: any, accessToken: string, refreshToken: string) {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+    maxAge: 15 * 60 * 1000, // 15 minutes
+    domain: COOKIE_DOMAIN,
+  });
+  
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: 'lax',
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    domain: COOKIE_DOMAIN,
+  });
 }
 
 // Validation schemas
@@ -44,16 +94,50 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-// Middleware to check if user is authenticated
+// Hybrid authentication middleware - supports both JWT and legacy sessions
 export function isAuthenticated(req: any, res: any, next: any) {
+  // Check JWT first (from cookies or Authorization header)
+  const accessToken = req.cookies?.accessToken || 
+    (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.slice(7) : null);
+  
+  if (accessToken) {
+    const payload = verifyAccessToken(accessToken);
+    if (payload) {
+      req.user = payload;
+      return next();
+    }
+  }
+  
+  // Fallback to legacy session authentication (for migration period)
   if (req.session?.userId) {
-    // Add user info to request for compatibility
     req.user = {
       id: req.session.userId,
       role: req.session.userRole
     };
+    
+    // Optionally issue JWT tokens for legacy session users (silent migration)
+    try {
+      const accessToken = generateAccessToken({ id: req.user.id, role: req.user.role });
+      const refreshToken = generateRefreshToken();
+      
+      // Save refresh token
+      storage.saveRefreshToken({
+        userId: req.user.id,
+        tokenHash: hashRefreshToken(refreshToken),
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        userAgent: req.headers['user-agent'] || '',
+        ipAddress: req.ip || req.connection.remoteAddress || '',
+      });
+      
+      setJWTCookies(res, accessToken, refreshToken);
+      console.log(`[AUTH] Migrated session to JWT for user ${req.user.id}`);
+    } catch (error) {
+      console.error('[AUTH] Failed to migrate session to JWT:', error);
+    }
+    
     return next();
   }
+  
   return res.status(401).json({ message: "Unauthorized" });
 }
 

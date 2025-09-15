@@ -7,6 +7,7 @@ import {
   quotes,
   reviews,
   messages,
+  refreshTokens,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -17,6 +18,7 @@ import {
   type Quote,
   type Review,
   type Message,
+  type RefreshToken,
   type InsertServiceCategory,
   type InsertServicePart,
   type InsertCompany,
@@ -24,16 +26,24 @@ import {
   type InsertQuote,
   type InsertReview,
   type InsertMessage,
+  type InsertRefreshToken,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, sql } from "drizzle-orm";
 
 export interface IStorage {
-  // User operations - mandatory for Replit Auth
+  // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(userData: InsertUser): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
+  
+  // Refresh token operations for JWT authentication
+  saveRefreshToken(tokenData: Omit<InsertRefreshToken, 'id' | 'createdAt'>): Promise<RefreshToken>;
+  findRefreshTokenByHash(tokenHash: string): Promise<RefreshToken | undefined>;
+  revokeRefreshToken(id: string): Promise<void>;
+  revokeRefreshTokensForUser(userId: string): Promise<void>;
+  cleanupExpiredTokens(): Promise<void>;
   
   // Service categories
   getServiceCategories(): Promise<ServiceCategory[]>;
@@ -374,6 +384,47 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(serviceRequests)
       .orderBy(desc(serviceRequests.createdAt));
+  }
+
+  // Refresh token operations for JWT authentication
+  async saveRefreshToken(tokenData: Omit<InsertRefreshToken, 'id' | 'createdAt'>): Promise<RefreshToken> {
+    const [result] = await db.insert(refreshTokens).values(tokenData).returning();
+    return result;
+  }
+
+  async findRefreshTokenByHash(tokenHash: string): Promise<RefreshToken | undefined> {
+    const [token] = await db
+      .select()
+      .from(refreshTokens)
+      .where(and(
+        eq(refreshTokens.tokenHash, tokenHash),
+        eq(refreshTokens.revokedAt, null as any),
+        sql`${refreshTokens.expiresAt} > NOW()`
+      ));
+    return token;
+  }
+
+  async revokeRefreshToken(id: string): Promise<void> {
+    await db
+      .update(refreshTokens)
+      .set({ revokedAt: new Date() })
+      .where(eq(refreshTokens.id, id));
+  }
+
+  async revokeRefreshTokensForUser(userId: string): Promise<void> {
+    await db
+      .update(refreshTokens)
+      .set({ revokedAt: new Date() })
+      .where(and(
+        eq(refreshTokens.userId, userId),
+        eq(refreshTokens.revokedAt, null as any)
+      ));
+  }
+
+  async cleanupExpiredTokens(): Promise<void> {
+    await db
+      .delete(refreshTokens)
+      .where(sql`${refreshTokens.expiresAt} < NOW() OR ${refreshTokens.revokedAt} IS NOT NULL`);
   }
 }
 
