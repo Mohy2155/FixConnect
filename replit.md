@@ -1,10 +1,8 @@
-# FixConnect - UAE Home Maintenance Platform
+# FixConnect
 
 ## Overview
 
-FixConnect is a comprehensive mobile-first web application designed to connect homeowners with certified maintenance service providers across the UAE. The platform serves as a marketplace where users can request home maintenance services, receive quotes from verified companies, and manage their service requests through an intuitive interface.
-
-The application caters to two primary user types: homeowners who need maintenance services and service companies that provide those services. It focuses on common UAE home maintenance needs including plumbing, electrical work, AC & cooling services, and appliance repairs.
+FixConnect is a comprehensive service marketplace platform designed for the UAE market, connecting homeowners with verified service companies. The application features a mobile-first design supporting multiple languages (English, Arabic, Hindi, Urdu) with RTL support. The platform facilitates service requests, company onboarding, job management, and real-time messaging between homeowners and service providers.
 
 ## User Preferences
 
@@ -13,59 +11,82 @@ Preferred communication style: Simple, everyday language.
 ## System Architecture
 
 ### Frontend Architecture
-
-The client-side application is built using React with TypeScript, implementing a mobile-first responsive design approach. The architecture follows a component-based structure with the following key patterns:
-
-- **Routing**: Uses Wouter for lightweight client-side routing, with conditional routing based on authentication state
-- **State Management**: Leverages TanStack Query (React Query) for server state management and caching, eliminating the need for complex global state solutions
-- **UI Framework**: Built on shadcn/ui components with Radix UI primitives, providing accessible and customizable UI components
-- **Styling**: Utilizes Tailwind CSS with CSS custom properties for consistent theming and responsive design
-- **Form Management**: React Hook Form with Zod validation for type-safe form handling
-
-The application is structured around key page components (Home, Service Request, Jobs, Messages, Profile) with shared UI components and hooks for common functionality.
+- **Framework**: React with TypeScript using Vite as the build tool
+- **Styling**: Tailwind CSS with shadcn/ui components for consistent design
+- **Routing**: Wouter for lightweight client-side routing
+- **State Management**: React Query (TanStack Query) for server state management and caching
+- **Form Handling**: React Hook Form with Zod validation schemas
+- **Internationalization**: i18next for multi-language support with automatic RTL detection
 
 ### Backend Architecture
+- **Runtime**: Node.js with Express server
+- **Language**: TypeScript for type safety across the entire stack
+- **API Design**: RESTful API with session-based authentication
+- **File Structure**: Monorepo structure with shared types and schemas between client and server
 
-The server follows a RESTful API design built on Express.js with TypeScript, implementing a layered architecture pattern:
+### Authentication & Authorization
+- **Session Management**: Express sessions with memory store for development
+- **Password Security**: Scrypt-based password hashing with salt
+- **JWT Integration**: Dual token system with access and refresh tokens
+- **Role-based Access**: Support for homeowner, company, and admin roles
+- **Multi-role Login**: Separate authentication flows for different user types
 
-- **Route Layer**: Handles HTTP requests and responses, input validation, and error handling
-- **Storage Layer**: Abstracts database operations through a well-defined interface, enabling easy testing and potential database migrations
-- **Authentication Middleware**: Integrates with Replit's OpenID Connect authentication system for secure user management
-- **Session Management**: Uses PostgreSQL-backed sessions with connect-pg-simple for persistent user sessions
+### Data Storage
+- **Database**: PostgreSQL with Drizzle ORM for type-safe database operations
+- **Schema Management**: Centralized schema definitions in shared directory
+- **Database Provider**: Neon serverless PostgreSQL with connection pooling
+- **Migrations**: Drizzle Kit for database schema migrations
 
-The server implements comprehensive logging middleware for API requests and includes proper error handling with structured error responses.
+### Component Architecture
+- **Design System**: Radix UI primitives with custom styling via Tailwind CSS
+- **Mobile-first**: Responsive design optimized for mobile devices
+- **Navigation**: Bottom navigation for mobile app-like experience
+- **Reusable Components**: Modular component library for consistency
 
-### Data Storage Solutions
+### Business Logic Features
+- **Service Categories**: Dynamic category system with icons and descriptions
+- **Job Management**: Complete lifecycle from request to completion with status tracking
+- **Quote System**: Multi-company bidding with detailed cost breakdowns
+- **Review System**: Rating and feedback mechanism for completed services
+- **Messaging**: Real-time communication between homeowners and companies
+- **Company Verification**: Admin approval process for service providers
 
-The application uses PostgreSQL as the primary database with Drizzle ORM for type-safe database operations:
+## External Dependencies
 
-- **Database Provider**: Neon Database (serverless PostgreSQL) for scalable cloud database hosting
-- **ORM**: Drizzle ORM provides compile-time type safety and excellent TypeScript integration
-- **Schema Management**: Centralized schema definitions in `shared/schema.ts` ensure consistency between client and server
-- **Migration Strategy**: Uses Drizzle Kit for database schema migrations and version control
+### UI and Styling
+- **Radix UI**: Comprehensive set of accessible UI primitives
+- **Tailwind CSS**: Utility-first CSS framework
+- **Lucide React**: Icon library for consistent iconography
+- **Class Variance Authority**: Type-safe component variants
 
-The database schema supports multi-tenancy with role-based access (homeowners vs. companies) and includes comprehensive relationships between users, companies, service requests, quotes, and messages.
+### Database and ORM
+- **Neon Database**: Serverless PostgreSQL hosting
+- **Drizzle ORM**: Type-safe SQL toolkit and query builder
+- **Connection Pooling**: @neondatabase/serverless for efficient database connections
 
-### Authentication and Authorization
+### Authentication and Security
+- **Express Session**: Session management middleware
+- **bcrypt/scrypt**: Password hashing utilities
+- **jsonwebtoken**: JWT token generation and verification
+- **connect-pg-simple**: PostgreSQL session store
 
-Authentication is handled through Replit's OpenID Connect integration:
+### Development and Build Tools
+- **Vite**: Fast build tool and development server
+- **TypeScript**: Static type checking
+- **ESBuild**: Fast JavaScript bundler for production builds
+- **PostCSS**: CSS processing with Autoprefixer
 
-- **Provider**: Replit OIDC for secure authentication without managing user credentials
-- **Session Management**: Server-side sessions stored in PostgreSQL with configurable TTL
-- **Authorization**: Role-based access control distinguishing between homeowner and company user types
-- **Security**: HTTP-only cookies with secure flags for production environments
+### Form and Validation
+- **React Hook Form**: Performant form library
+- **Zod**: Schema validation library
+- **@hookform/resolvers**: Integration between React Hook Form and Zod
 
-The authentication system automatically creates user profiles on first login and supports profile updates for both homeowner and company accounts.
+### Internationalization
+- **i18next**: Internationalization framework
+- **react-i18next**: React integration for i18next
+- **i18next-browser-languagedetector**: Automatic language detection
 
-### External Dependencies
-
-- **Replit Authentication**: OpenID Connect provider for user authentication and identity management
-- **Neon Database**: Serverless PostgreSQL hosting with connection pooling and automatic scaling
-- **shadcn/ui Components**: Pre-built, accessible UI components based on Radix UI primitives
-- **TanStack Query**: Server state management, caching, and synchronization
-- **Tailwind CSS**: Utility-first CSS framework for rapid UI development
-- **React Hook Form**: Form state management and validation
-- **Zod**: Runtime type validation and schema definition
-- **Date-fns**: Date manipulation and formatting utilities
-
-The application is designed to be deployed on Replit's infrastructure with minimal configuration requirements, leveraging environment variables for database connections and authentication settings.
+### Utilities and Helpers
+- **date-fns**: Date manipulation library
+- **clsx**: Conditional className utility
+- **nanoid**: URL-safe unique ID generator
