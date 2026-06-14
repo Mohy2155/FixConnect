@@ -557,7 +557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ message: 'Logged out successfully' });
   });
 
-  // Remove duplicate role-specific login endpoints - they are defined in replitAuth.ts
+  // Role-specific login logic is handled in auth.ts
 
   // Company profile endpoints
   app.get('/api/company/profile', isAuthenticated, async (req: any, res) => {
