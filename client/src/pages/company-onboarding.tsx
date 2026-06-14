@@ -118,7 +118,7 @@ export default function CompanyOnboarding() {
           description: "Please log in to continue.",
           variant: "destructive",
         });
-        window.location.href = "/api/login";
+        window.location.href = "/auth";
         return;
       }
       toast({

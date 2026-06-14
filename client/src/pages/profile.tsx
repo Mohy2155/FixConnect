@@ -99,7 +99,7 @@ export default function Profile() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth";
         }, 500);
         return;
       }
@@ -142,7 +142,7 @@ export default function Profile() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth";
         }, 500);
         return;
       }
@@ -162,7 +162,7 @@ export default function Profile() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/auth";
       }, 500);
       return;
     }
@@ -483,7 +483,7 @@ export default function Profile() {
                     <Button 
                       variant="outline" 
                       className="w-full justify-start text-blue-600"
-                      onClick={() => window.location.href = '/api/login/company'}
+                      onClick={() => window.location.href = '/auth?role=company'}
                       data-testid="button-switch-to-company"
                     >
                       <Building className="h-4 w-4 mr-2" />
@@ -493,7 +493,7 @@ export default function Profile() {
                     <Button 
                       variant="outline" 
                       className="w-full justify-start text-blue-600"
-                      onClick={() => window.location.href = '/api/login/homeowner'}
+                      onClick={() => window.location.href = '/auth?role=homeowner'}
                       data-testid="button-switch-to-homeowner"
                     >
                       <User className="h-4 w-4 mr-2" />

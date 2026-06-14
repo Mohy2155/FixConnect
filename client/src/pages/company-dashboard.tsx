@@ -75,7 +75,7 @@ export default function CompanyDashboard() {
     });
     
     setTimeout(() => {
-      window.location.href = "/api/login/homeowner";
+      window.location.href = "/auth?role=homeowner";
     }, 500);
   };
 

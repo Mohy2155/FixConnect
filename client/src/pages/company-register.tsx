@@ -4,7 +4,7 @@ import { Building, Users, ArrowRight, Shield, CheckCircle } from "lucide-react";
 
 export default function CompanyRegister() {
   const handleCompanySignup = () => {
-    window.location.href = "/api/login/company";
+    window.location.href = "/auth?role=company";
   };
 
   const handleBackToHome = () => {

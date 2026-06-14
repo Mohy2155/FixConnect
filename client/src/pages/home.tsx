@@ -60,7 +60,7 @@ export default function Home() {
     
     // Redirect to role-specific login
     setTimeout(() => {
-      window.location.href = `/api/login/${role}`;
+      window.location.href = `/auth?role=${role}`;
     }, 500);
   };
 
@@ -72,7 +72,7 @@ export default function Home() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/auth";
       }, 500);
       return;
     }
