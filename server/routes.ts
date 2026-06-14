@@ -338,10 +338,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/service-requests', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const serviceRequests = await storage.getServiceRequestsByCustomer(userId);
-      res.json(serviceRequests);
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      if (user.role === 'company') {
+        const company = await storage.getCompanyByUserId(userId);
+        if (!company) {
+          return res.status(404).json({ message: "Company profile not found" });
+        }
+
+        // For companies, return service requests they have quoted on
+        const quotes = await storage.getQuotesByCompany(company.id);
+        const requestIds = [...new Set(quotes.map(q => q.serviceRequestId))];
+        const requests = await Promise.all(
+          requestIds.map(id => storage.getServiceRequest(id))
+        );
+        
+        return res.json(requests.filter(Boolean).sort((a, b) => 
+          new Date(b!.createdAt).getTime() - new Date(a!.createdAt).getTime()
+        ));
+      } else {
+        // For homeowners, return their own service requests
+        const requests = await storage.getServiceRequestsByCustomer(userId);
+        return res.json(requests);
+      }
     } catch (error) {
-      console.error('Error fetching service requests:', error);
+      console.error('Service requests fetch error:', error);
       res.status(500).json({ message: 'Failed to fetch service requests' });
     }
   });
@@ -349,16 +374,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/service-requests', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.id;
-      const requestData = {
-        ...req.body,
-        customerId: userId,
-        status: 'pending',
-      };
+      const user = await storage.getUser(userId);
       
-      const serviceRequest = await storage.createServiceRequest(requestData);
-      res.json(serviceRequest);
+      if (!user || user.role !== 'homeowner') {
+        return res.status(403).json({ message: 'Only homeowners can create service requests' });
+      }
+
+      const requestData = insertServiceRequestSchema.parse({ 
+        ...req.body, 
+        customerId: userId 
+      });
+      
+      const request = await storage.createServiceRequest(requestData);
+      res.json(request);
     } catch (error) {
-      console.error('Error creating service request:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
+      }
+      console.error('Service request creation error:', error);
       res.status(500).json({ message: 'Failed to create service request' });
     }
   });
@@ -453,37 +486,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Service requests
-  app.get('/api/service-requests', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const requests = await storage.getServiceRequestsByCustomer(userId);
-      res.json(requests);
-    } catch (error) {
-      console.error('Service requests fetch error:', error);
-      res.status(500).json({ message: 'Failed to fetch service requests' });
-    }
-  });
-
-  app.post('/api/service-requests', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.id;
-      const requestData = insertServiceRequestSchema.parse({ 
-        ...req.body, 
-        customerId: userId 
-      });
-      
-      const request = await storage.createServiceRequest(requestData);
-      res.json(request);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: 'Invalid request data', errors: error.errors });
-      }
-      console.error('Service request creation error:', error);
-      res.status(500).json({ message: 'Failed to create service request' });
-    }
-  });
-
   app.get('/api/service-requests/:id', isAuthenticated, async (req: any, res) => {
     try {
       const { id } = req.params;
@@ -495,17 +497,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Service request fetch error:', error);
       res.status(500).json({ message: 'Failed to fetch service request' });
-    }
-  });
-
-  // Get all companies for search
-  app.get('/api/companies', async (req, res) => {
-    try {
-      const companies = await storage.getAllCompanies();
-      res.json(companies);
-    } catch (error) {
-      console.error('Companies fetch error:', error);
-      res.status(500).json({ message: 'Failed to fetch companies' });
     }
   });
 
